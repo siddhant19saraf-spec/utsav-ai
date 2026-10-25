@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { publicAiStatus, readServerConfig } from './config.ts';
 
-const secret = 'sk-test-super-secret-value';
+const testCredential = 'fixture-provider-credential';
 
 function configuredEnv(): Record<string, string> {
   return {
-    AI_PROVIDER_API_KEY: secret,
+    AI_PROVIDER_API_KEY: testCredential,
     AI_MODEL: 'test-model',
     AI_PROVIDER_NAME: 'Test Provider',
     AI_BASE_URL: 'https://provider.example.test/v1',
@@ -31,20 +31,20 @@ describe('server configuration', () => {
   });
 
   it('requires a model when an API key is present', () => {
-    const config = readServerConfig({ AI_PROVIDER_API_KEY: secret });
+    const config = readServerConfig({ AI_PROVIDER_API_KEY: testCredential });
 
     expect(config.configured).toBe(false);
     expect(config.configurationErrors).toEqual([
       'AI_MODEL is required when AI_PROVIDER_API_KEY is set.',
     ]);
-    expect(config.configurationErrors.join(' ')).not.toContain(secret);
+    expect(config.configurationErrors.join(' ')).not.toContain(testCredential);
   });
 
   it('reports configured provider metadata without exposing the key or base URL', () => {
     const config = readServerConfig(configuredEnv());
 
     expect(config.configured).toBe(true);
-    expect(config.provider.apiKey).toBe(secret);
+    expect(config.provider.apiKey).toBe(testCredential);
 
     const status = publicAiStatus(config);
     const serialized = JSON.stringify(status);
@@ -52,7 +52,7 @@ describe('server configuration', () => {
     expect(status.configured).toBe(true);
     expect(status.providerName).toBe('Test Provider');
     expect(status.model).toBe('test-model');
-    expect(serialized).not.toContain(secret);
+    expect(serialized).not.toContain(testCredential);
     expect(serialized).not.toContain('provider.example.test');
     expect(serialized).not.toContain('https://');
   });
@@ -72,12 +72,12 @@ describe('server configuration', () => {
     expect(config.configurationErrors.join(' ')).toContain('AI_REQUEST_TIMEOUT_MS');
     expect(config.configurationErrors.join(' ')).toContain('AI_BASE_URL');
     expect(config.configurationErrors.join(' ')).not.toContain('secret-value');
-    expect(config.configurationErrors.join(' ')).not.toContain(secret);
+    expect(config.configurationErrors.join(' ')).not.toContain(testCredential);
 
     const status = publicAiStatus(config);
     expect(status.configured).toBe(false);
     expect(status.message).toContain('invalid');
-    expect(JSON.stringify(status)).not.toContain(secret);
+    expect(JSON.stringify(status)).not.toContain(testCredential);
   });
 
   it('uses bounded defaults for unset numeric settings', () => {

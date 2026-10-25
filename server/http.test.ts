@@ -14,10 +14,10 @@ import { createRateLimiter } from './rateLimit.ts';
 import { ProviderError } from './provider.ts';
 import { AiServiceError, type AiService } from './service.ts';
 
-const secret = 'sk-http-test-secret';
+const testCredential = 'fixture-http-credential';
 const providerBaseUrl = 'https://provider.example.test/v1';
 const configuredEnv = {
-  AI_PROVIDER_API_KEY: secret,
+  AI_PROVIDER_API_KEY: testCredential,
   AI_MODEL: 'test-model',
   AI_PROVIDER_NAME: 'Test Provider',
   AI_BASE_URL: providerBaseUrl,
@@ -165,7 +165,7 @@ describe('AI HTTP API boundary', () => {
     expect(parsed.data.providerName).toBeNull();
     expect(parsed.data.model).toBeNull();
     expect(parsed.data.message).toContain('AI_PROVIDER_API_KEY');
-    expect(JSON.stringify(parsed.data)).not.toContain(secret);
+    expect(JSON.stringify(parsed.data)).not.toContain(testCredential);
   });
 
   it('reports configured metadata, safe headers, and no provider connection details', async () => {
@@ -187,7 +187,7 @@ describe('AI HTTP API boundary', () => {
     expect(parsed.data.configured).toBe(true);
     expect(parsed.data.providerName).toBe('Test Provider');
     expect(parsed.data.model).toBe('test-model');
-    expect(text).not.toContain(secret);
+    expect(text).not.toContain(testCredential);
     expect(text).not.toContain('provider.example.test');
   });
 
@@ -440,7 +440,7 @@ describe('AI HTTP API boundary', () => {
       createRequestId: () => 'req-safe-1',
       service: {
         async generatePlan() {
-          throw new Error('internal payload with sk-live-secret');
+          throw new Error('internal payload with provider-private-value');
         },
       },
     });
@@ -451,7 +451,7 @@ describe('AI HTTP API boundary', () => {
 
     expect(response.status).toBe(500);
     expect(error.code).toBe('server-error');
-    expect(error.message).not.toContain('sk-live-secret');
+    expect(error.message).not.toContain('provider-private-value');
     expect(memory.error.join(' ')).toContain('request=req-safe-1');
     expect(memory.error.join(' ')).toContain('error=Error');
     expect(memory.error.join(' ')).not.toContain('internal payload');
@@ -476,6 +476,6 @@ describe('AI HTTP API boundary', () => {
     expect(memory.info.join(' ')).toContain('status=200');
     expect(memory.info.join(' ')).not.toContain('Test Celebration');
     expect(memory.info.join(' ')).not.toContain('Plan a wedding');
-    expect(memory.info.join(' ')).not.toContain(secret);
+    expect(memory.info.join(' ')).not.toContain(testCredential);
   });
 });

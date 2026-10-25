@@ -283,7 +283,7 @@ describe('AI service validation boundary', () => {
       name: 'Test Provider',
       model: 'test-model',
       async generate() {
-        throw new Error('raw provider payload with sk-live-secret');
+        throw new Error('raw provider payload with provider-private-value');
       },
     };
     const service = createAiService({
@@ -299,7 +299,7 @@ describe('AI service validation boundary', () => {
       expect(error).toBeInstanceOf(ProviderError);
       const providerError = error as ProviderError;
       expect(providerError.code).toBe('provider-error');
-      expect(providerError.message).not.toContain('sk-live-secret');
+      expect(providerError.message).not.toContain('provider-private-value');
       expect(providerError.message).not.toContain('raw provider payload');
     }
   });

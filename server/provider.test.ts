@@ -6,7 +6,7 @@ import {
   type FetchLike,
 } from './provider.ts';
 
-const secret = 'sk-test-provider-secret';
+const testCredential = 'fixture-provider-credential';
 
 const request: AiProviderRequest = {
   system: 'System prompt',
@@ -17,7 +17,7 @@ const request: AiProviderRequest = {
 
 function makeProvider(fetchImpl: FetchLike) {
   return createOpenAiCompatibleProvider({
-    apiKey: secret,
+    apiKey: testCredential,
     baseUrl: 'https://provider.example.test/v1',
     model: 'test-model',
     name: 'Test Provider',
@@ -84,7 +84,7 @@ describe('OpenAI-compatible provider adapter', () => {
     expect(url).toBe('https://provider.example.test/v1/chat/completions');
     expect(init?.method).toBe('POST');
     expect(init?.headers).toMatchObject({
-      Authorization: `Bearer ${secret}`,
+      Authorization: `Bearer ${testCredential}`,
       'Content-Type': 'application/json',
     });
 
@@ -113,7 +113,7 @@ describe('OpenAI-compatible provider adapter', () => {
     expect(timeoutError.code).toBe('timeout');
     expect(abortError.code).toBe('timeout');
     expect(timeoutError.message).toContain('did not respond');
-    expect(timeoutError.message).not.toContain(secret);
+    expect(timeoutError.message).not.toContain(testCredential);
   });
 
   it('maps network failures to unavailable without leaking connection details', async () => {
@@ -130,12 +130,12 @@ describe('OpenAI-compatible provider adapter', () => {
   it('maps rejected credentials to an authentication error', async () => {
     for (const status of [401, 403]) {
       const error = await captureProviderError(async () =>
-        jsonResponse({ error: { message: `bad key ${secret}` } }, status),
+        jsonResponse({ error: { message: `bad key ${testCredential}` } }, status),
       );
 
       expect(error.code).toBe('auth');
       expect(error.message).toContain('rejected the server credentials');
-      expect(error.message).not.toContain(secret);
+      expect(error.message).not.toContain(testCredential);
     }
   });
 
@@ -150,22 +150,22 @@ describe('OpenAI-compatible provider adapter', () => {
     expect(withDelay.code).toBe('rate-limited');
     expect(withDelay.retryAfterSeconds).toBe(45);
     expect(withoutDelay.retryAfterSeconds).toBeNull();
-    expect(withDelay.message).not.toContain(secret);
+    expect(withDelay.message).not.toContain(testCredential);
   });
 
   it('maps server failures to unavailable and other rejections to provider-error', async () => {
     const unavailable = await captureProviderError(async () =>
-      jsonResponse({ error: 'internal ${secret}' }, 500),
+      jsonResponse({ error: 'internal ${testCredential}' }, 500),
     );
     const rejected = await captureProviderError(async () =>
-      jsonResponse({ error: `invalid model ${secret}` }, 400),
+      jsonResponse({ error: `invalid model ${testCredential}` }, 400),
     );
 
     expect(unavailable.code).toBe('unavailable');
     expect(unavailable.message).toContain('temporarily unavailable');
     expect(rejected.code).toBe('provider-error');
     expect(rejected.message).toContain('rejected the request');
-    expect(`${unavailable.message} ${rejected.message}`).not.toContain(secret);
+    expect(`${unavailable.message} ${rejected.message}`).not.toContain(testCredential);
   });
 
   it('rejects non-JSON bodies and missing message content', async () => {
