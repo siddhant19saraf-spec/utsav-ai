@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: utsav-ai
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVE_STATIC
+        value: "true"
+      - key: AI_SERVER_HOST
+        value: 0.0.0.0
