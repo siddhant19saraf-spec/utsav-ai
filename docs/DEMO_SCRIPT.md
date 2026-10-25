@@ -2,7 +2,7 @@
 
 A three-to-four-minute, live demonstration of the features that actually exist in this repository. The script uses the bundled fictional sample workspace and the verified Event Rescue budget-reduction scenario.
 
-This is a **script**, not evidence that a demo was recorded. No video, hosted demo, screenshots, or deployment is included in the repository. A deployment guide is prepared in [DEPLOYMENT.md](DEPLOYMENT.md), but no public URL exists and no deployment has been performed.
+This is a **script**, not evidence that a demo was recorded. No video, hosted demo, or deployment is included. Static screenshots of the running app exist in [`docs/screenshots/`](screenshots/), but they are not a recording. A deployment guide is prepared in [DEPLOYMENT.md](DEPLOYMENT.md), but no public URL exists and no deployment has been performed.
 
 ## Demo at a glance
 
@@ -266,7 +266,7 @@ This is a local single-user prototype with plaintext browser storage and plainte
 
 - That a real external AI provider was used, unless the optional path was explicitly configured and verified.
 - That UTSAV AI can book vendors, check live availability, verify weather, send invitations, process payments, or sync between devices.
-- That the app is hosted, deployed, publicly accessible, or covered by a CI pipeline.
+- That the app is hosted, deployed, or publicly accessible, or that CI verifies browser E2E, deployment, or a live provider. CI runs type checking, linting, tests, and the build only.
 - That deterministic rescue is mathematically optimal; the repair is deterministic and greedy.
 - That approval resolves every remaining issue; the UI reports remaining issues explicitly.
-- That the repository contains screenshots or a demo video; it does not.
+- That a demo video or recording exists; none is committed. Static screenshots are not a substitute for a recorded demo.

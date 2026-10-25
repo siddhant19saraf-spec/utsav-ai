@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup and troubleshooting
+    url: https://github.com/siddhant19saraf-spec/utsav-ai/blob/main/docs/SETUP.md
+    about: Installation, environment variables, local API server, and common problems.
+  - name: Feature status and known limitations
+    url: https://github.com/siddhant19saraf-spec/utsav-ai/blob/main/docs/FEATURE_STATUS.md
+    about: Check what is implemented, what requires configuration, and what is intentionally out of scope.
+  - name: Report a security vulnerability privately
+    url: https://github.com/siddhant19saraf-spec/utsav-ai/security/advisories/new
+    about: Do not open a public issue for a suspected vulnerability. Follow SECURITY.md.

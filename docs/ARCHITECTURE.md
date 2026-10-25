@@ -399,7 +399,7 @@ The server log records only safe request metadata: route, method, status, durati
 - Server tests live in `server/` and are type-checked under `tsconfig.node.json`. They use mocked providers or ephemeral local server paths, not real credentials or paid calls.
 - Static-serving and composition tests create temporary fixture directories and exercise SPA fallback, nested routes, assets, HEAD, traversal/dotfile rejection, API-versus-static routing, and static-root validation without network access.
 - The suite covers validation, persistence migration/salvage, cross-event isolation, budget and rescue constraints, risk reconciliation, stale/duplicate approvals, AI contracts, privacy isolation, provider failures, rate limits, health, static serving, and key UI flows.
-- There is no committed browser E2E suite, no CI configuration, no real-provider integration test, and no platform deployment test. See the root README for the exact latest test counts and build results.
+- There is no committed browser E2E suite, no real-provider integration test, and no platform deployment test. The GitHub Actions workflow runs type checking, linting, tests, and the build only. See the root README for the exact latest test counts and build results.
 
 ## Deliberate design decisions and constraints
 

@@ -8,17 +8,29 @@ An intelligent, local-first celebration planning workspace with deterministic bu
 
 Built for **PromptWars Virtual — Challenge 5** · Category: **Intelligent celebration planning and event management**
 
-`React 19` · `TypeScript` · `Vite` · `Tailwind CSS` · `Node.js`
+[![CI](https://github.com/siddhant19saraf-spec/utsav-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/siddhant19saraf-spec/utsav-ai/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-24.16.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 
 </div>
 
 > **Project status:** local-first hackathon prototype, **prepared for deployment but not deployed**. Core planning works entirely in the browser. AI suggestions are optional, advisory, and require a running API server plus your own provider credentials. Deployment configuration for a single same-origin Node web service is included, but **no public URL, hosted demo, account system, or cloud sync exists**. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+<div align="center">
+  <a href="docs/screenshots/dashboard.png">
+    <img src="docs/screenshots/dashboard.png" alt="UTSAV AI dashboard showing sample events, budget totals, pending tasks, RSVP counts, and risk summaries" width="100%" />
+  </a>
+</div>
 
 ---
 
 ## Contents
 
 - [Project overview](#project-overview)
+- [Screenshots](#screenshots)
 - [Key features](#key-features)
 - [Implementation status](#implementation-status)
 - [What makes UTSAV AI different](#what-makes-utsav-ai-different)
@@ -50,6 +62,27 @@ UTSAV AI is a single-user celebration planning workspace for events such as wedd
 The central design decision is that **deterministic code owns every fact that matters**. Budget arithmetic, overrun detection, repair feasibility, timeline overlaps, guest counts, catering math, risk severity, and proposal validation are all implemented as pure TypeScript rules. AI is an optional planning assistant, not an authority: it cannot set totals, approve its own suggestions, change protected budgets, or mutate saved data without an explicit confirmation.
 
 UTSAV AI is designed for the moment a plan stops fitting: the budget is reduced, the guest count grows, the date moves, or a venue assumption changes. Instead of only warning about the problem, Event Rescue shows the evidence, computes a constrained repair, compares the original and proposed plans, and waits for the user to approve or reject it.
+
+## Screenshots
+
+These captures come from the running application at a 1440 px desktop viewport using the labelled sample workspace. All values are fictitious sample data. No AI provider was configured, so the AI Planner is shown in its real **Unavailable** state rather than a fabricated plan.
+
+| Budget Planner | Event Rescue proposal |
+| --- | --- |
+| [![Budget Planner showing category protections, minimums, reserve, utilisation, and overrun](docs/screenshots/budget.png)](docs/screenshots/budget.png) | [![Event Rescue showing a validated proposal that lowers total budget from 45 lakh to 42 lakh while preserving protected categories](docs/screenshots/rescue-proposal.png)](docs/screenshots/rescue-proposal.png) |
+| **Budget Planner** — integer-paise totals, protected and flexible categories, and explicit repair review. | **Event Rescue** — a validated original-versus-proposed plan; nothing is applied until approval. |
+| **Risk Intelligence** | **AI Planner without provider credentials** |
+| [![Risk Intelligence showing open findings by severity with evidence and recommended actions](docs/screenshots/risks.png)](docs/screenshots/risks.png) | [![AI Planner reporting that the API provider is unavailable and offering a deterministic local outline](docs/screenshots/ai-planner.png)](docs/screenshots/ai-planner.png) |
+| **Risk Intelligence** — deterministic findings, severity, evidence, and reconciliation history. | **AI Planner** — the honest unavailable state, with a labelled deterministic fallback. |
+
+<p align="center">
+  <a href="docs/screenshots/compact-dashboard.png">
+    <img src="docs/screenshots/compact-dashboard.png" alt="Compact 500 pixel layout of the UTSAV AI dashboard with hamburger navigation" width="320" />
+  </a>
+</p>
+<p align="center"><sub>Compact layout at a 500 px viewport, using the same sample workspace.</sub></p>
+
+Additional captures, including the Event Rescue request form, are in [docs/screenshots/](docs/screenshots/).
 
 ## Key features
 
@@ -120,7 +153,7 @@ Statuses are based on source inspection and the test suite available in this rep
 | Hosted database, accounts, cloud sync | **Not implemented** | The app is single-user and browser-local; there is no server database or sign-in. |
 | Live vendor prices, bookings, availability, weather | **Not implemented** | No vendor, calendar, payment, or weather integration exists. |
 | Payments | **Not implemented** | Nothing in this repository processes payments. |
-| CI pipeline | **Not implemented** | Verification commands are run locally; no CI configuration is included. |
+| CI pipeline | **Implemented** | GitHub Actions workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `npm ci`, type checking, linting, tests, and the production build on pushes and pull requests to `main`. Check the Actions tab for the latest actual run. |
 
 For per-feature evidence and scope notes, see [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md).
 
@@ -369,11 +402,15 @@ The build emits a Vite warning that the single JavaScript chunk exceeds 500 kB a
 
 What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, and the main UI flows with Testing Library.
 
+### Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request to `main` using Node.js from `.node-version` and read-only repository permissions. It installs with `npm ci` and runs type checking, linting, tests, and the production build. It does not call a real AI provider, deploy the application, or upload build output. The Actions tab is the authoritative source for a given commit; a green check does not substitute for browser end-to-end testing, deployment verification, or a security audit.
+
 Limitations of the current verification:
 
 - The AI provider path is tested with a mocked provider or local test server path; no real paid provider call was made and no live-model output is claimed as verified.
 - There is no committed end-to-end browser automation suite (for example Playwright or Cypress). Browser checks during development were manual/headless QA, not a reproducible checked-in suite.
-- No CI workflow runs these commands; they are local commands.
+- CI runs the four required commands on pushes and pull requests, but it does not run browser E2E, deploy the app, or call a live provider.
 - Screen-reader behavior and physical-device responsiveness are not certified.
 - Tests do not prove that external facts such as vendor availability, prices, or weather are correct; the app has no such integrations.
 
@@ -429,7 +466,7 @@ Limitations of the current verification:
 - AI suggestions require external configuration and provider compatibility; the repo's tests use mocked providers, so real-model quality and latency are not evaluated here.
 - The production build is a single large JavaScript chunk; code splitting and bundle optimisation are future work.
 - Mobile navigation and dialogs have automated keyboard tests, but the interface has not been tested on a broad matrix of physical devices or screen readers.
-- The repository includes no CI workflow, no committed E2E suite, and no screenshots or demo video.
+- The repository includes no committed browser E2E suite or demo video; screenshots are static captures of the running app. CI covers type checking, linting, tests, and the build, but not browser E2E or deployment.
 - Deployment is prepared but not performed. The Render Blueprint and production server were verified only locally, not on the platform.
 - The project has no chosen license yet (see below).
 
@@ -442,7 +479,7 @@ These are **not implemented** and should not be read as commitments or current b
 - More Event Rescue scenarios, including configurable repair strategies and scenario comparison.
 - Calendar export, invitation workflows, and integration adapters for real vendor availability where an authoritative source exists.
 - Further accessibility validation with screen readers and physical devices.
-- Bundle code splitting, a committed E2E suite, and CI checks.
+- Bundle code splitting and a committed browser E2E suite.
 - A platform deployment with verified HTTPS, headers, and post-deploy smoke tests, if the owner authorizes it.
 - A governance and licensing decision suitable for public reuse.
 
@@ -453,11 +490,15 @@ These are **not implemented** and should not be read as commitments or current b
 - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — a realistic three-to-four-minute competition demo script with exact sample values, expected results, a backup path, privacy warnings, and a recording checklist.
 - [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md) — detailed per-feature status, evidence, scope, and known gaps.
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — prepared single-service hosting architecture, environment variables, local production verification, smoke tests, troubleshooting, and deployment limitations. No deployment has been performed.
+- [CHANGELOG.md](CHANGELOG.md) — notable changes, the current source snapshot, and known limitations.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development setup, deterministic and privacy boundaries, required checks, and pull request expectations.
+- [SECURITY.md](SECURITY.md) — private vulnerability reporting, supported source, scope, and security-relevant design notes.
+- [.github/](.github/) — GitHub Actions CI, issue forms, and the pull request template.
 
 For the engineering conventions used in this repository, see [AGENTS.md](AGENTS.md).
 
 ## License
 
-**No license is specified for this project yet.** There is no `LICENSE` file in the repository, and `package.json` is marked `"private": true`. Absence of a license means others do not receive explicit permission to copy, modify, or redistribute the code. Before publishing the project as an open-source repository, the owner must choose a license and add the corresponding `LICENSE` file. No license is implied by this README.
+**No license is specified for this project yet.** There is no `LICENSE` file in the repository, and `package.json` is marked `"private": true`. The source is publicly visible, but absence of a license means others do not receive explicit permission to copy, modify, or redistribute the code. The owner must choose a license and add the corresponding `LICENSE` file before the project can be described as open source. No license is implied by this README.
 
 Third-party dependencies remain under their own licenses.

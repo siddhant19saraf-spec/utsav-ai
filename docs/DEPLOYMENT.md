@@ -47,7 +47,7 @@ The repository therefore targets **one same-origin Node service**, not a fronten
 
 ## 2. Prerequisites
 
-- A Render account and a Git repository containing this project. Creating a remote and uploading the project are user actions; this repository has no remote configured by the preparation work.
+- A Render account and a Git repository containing this project. Connecting the repository and creating the service are user actions.
 - Node.js **24.16.0** locally for parity, and Node.js `>= 24.15.0` as declared in `package.json`.
 - npm with the committed `package-lock.json`.
 - No database, Docker image, object storage, or DNS record is required.
@@ -288,7 +288,7 @@ Confirm the build step completed and the service restarted. Hashed assets are im
 - **Single-instance assumption:** the in-process rate limiter and provider behavior assume one Node process. Horizontal scaling is not prepared.
 - **Static server scope:** the Node static handler supports the Vite output and SPA fallback; it is not a general-purpose CDN and does not add compression or edge caching. Render's platform may provide some of those capabilities, but they were not verified here.
 - **Cold starts:** free hosting can sleep, adding latency before the first request.
-- **No CI or E2E suite:** the automated suite and local production preview were run locally; no hosted browser pipeline or deployment regression suite exists.
+- **No deployment CI or hosted E2E:** the GitHub Actions workflow runs type checking, linting, tests, and the build, but there is no deployment pipeline, hosted smoke test, or deployment regression suite.
 - **No live provider verification:** mocked tests establish the validation and failure paths, not model quality, latency, cost, or provider terms.
 - **No license implied:** deployment does not change the repository's lack of a license. See the root README.
 

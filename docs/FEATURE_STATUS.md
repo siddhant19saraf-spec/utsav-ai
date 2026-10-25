@@ -71,7 +71,7 @@ This file records what is implemented, what has been verified, and what is inten
 | Responsive layouts | **Implemented but not fully verified** | Responsive Tailwind layouts and a mobile navigation drawer exist. | Source and automated navigation tests; not tested on a broad physical-device matrix. |
 | Reduced motion | **Implemented but not fully verified** | Reduced-motion handling exists in the design system. | Source inspection; no automated visual regression or user-preference test. |
 | End-to-end browser suite | **Not implemented** | No Playwright/Cypress suite is committed. Development browser QA is not a reproducible checked-in test artifact. | Repository inspection. |
-| CI pipeline | **Not implemented** | No workflow configuration; commands are run locally. | Repository inspection. |
+| CI pipeline | **Implemented** | `.github/workflows/ci.yml` runs `npm ci`, typecheck, lint, tests, and build on pushes and pull requests to `main`, using Node.js from `.node-version` and read-only permissions. Check GitHub Actions for the latest actual run. | Workflow configuration inspection; no deployment or browser E2E job. |
 | Production static serving and SPA fallback | **Implemented and verified locally** | The Node server can serve `dist/` with SPA fallback, correct MIME types, immutable asset caching, no-cache HTML, GET/HEAD, and path-traversal/dotfile rejection. | `server/app.test.ts` (4 tests); local production-server checks for `/`, `/rescue`, a missing asset, and API/static routing. No platform deployment was tested. |
 | Health endpoint | **Implemented and verified** | `GET /api/health` returns `200 {"status":"ok"}` with safe headers and no configuration detail; other methods receive 405. It works without AI credentials. | `server/http.test.ts` health test; local production-server check. |
 | Deployment configuration | **Prepared, not deployed** | `render.yaml`, `.node-version`, `npm start`, production static settings, environment documentation, and a deployment guide exist. No hosting service, DNS record, TLS certificate, or public URL was created. | Source inspection of `render.yaml`, `server/config.ts`, `server/index.ts`, and `docs/DEPLOYMENT.md`; local production-server checks only. |
@@ -95,10 +95,10 @@ This file records what is implemented, what has been verified, and what is inten
 | Item | Status | Notes |
 | --- | --- | --- |
 | License | **Not specified** | No `LICENSE` file; `package.json` is private. An explicit license must be chosen before public reuse is granted. |
-| Screenshots or demo video | **Not included** | None are present in the repository; no recording link exists. |
+| Screenshots or demo video | **Screenshots included; no demo video** | Static screenshots of the running app are in `docs/screenshots/`, captured on 2026-10-25 with the labelled sample workspace. No recording or video link exists. | Files and README gallery; screenshots are not automated visual-regression evidence. |
 | Hosted demo | **Prepared, not deployed** | No public URL was created or tested. The app is still run locally. |
-| Git remote/push/branch operations | **Not performed** | Setup and documentation do not require a remote. |
-| CI test badges | **Not applicable** | No CI or remote pipeline exists. |
+| GitHub remote and publication | **Published** | The source is published at `https://github.com/siddhant19saraf-spec/utsav-ai` on `main`. No deployment, tagged release, or hosted service is claimed. | Repository metadata and Git history. |
+| CI test badges | **Included** | The README shows a GitHub Actions status badge for `ci.yml`, linking to the latest workflow runs. | README and workflow configuration. |
 
 ## Verification evidence summary
 

@@ -1,0 +1,81 @@
+name: Feature request
+description: Propose an improvement that fits the project's deterministic, local-first boundaries.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        UTSAV AI is a local-first planning prototype. Deterministic code owns budgets, feasibility, risk severity, guest counts, and approval; AI is optional and advisory. Proposals that move those decisions into AI or add a backend without a concrete need are unlikely to be accepted.
+
+        Security vulnerabilities belong in the private process described in [SECURITY.md](https://github.com/siddhant19saraf-spec/utsav-ai/blob/main/SECURITY.md), not in a public feature request.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight checks
+      options:
+        - label: I searched existing issues and discussions and did not find a duplicate.
+          required: true
+        - label: This request is not a security vulnerability.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Event workspace
+        - Budget Planner
+        - Event Rescue
+        - Timeline or tasks
+        - Guests, RSVP, or catering
+        - Risk Intelligence
+        - AI Planner or provider integration
+        - Persistence, export, or import
+        - Accessibility
+        - Developer experience, CI, or documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What planning problem or usability gap does this address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the expected behavior and which existing module should own the logic.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What simpler options or existing workflows did you evaluate?
+
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Deterministic and privacy impact
+      description: Would this change budget arithmetic, approval rules, stored data, AI context, or the server boundary? Explain how the deterministic and privacy guarantees stay intact.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: This request does not require invented vendor prices, live availability, weather, or booking confirmations without an authoritative source.
+          required: true
+        - label: This request does not include real credentials, guest data, or private planning information.
+          required: true
