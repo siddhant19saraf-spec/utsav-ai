@@ -360,6 +360,13 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
     [commit],
   );
 
+  const deleteEvent = useCallback(
+    (eventId: string) => {
+      commit({ type: 'event/deleted', eventId });
+    },
+    [commit],
+  );
+
   const toggleTask = useCallback(
     (taskId: string) => {
       const task = workspaceRef.current.tasks.find((entry) => entry.id === taskId);
@@ -760,6 +767,7 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
       persistence,
       createEvent,
       updateEvent,
+      deleteEvent,
       toggleTask,
       createTask,
       updateTask,
@@ -796,6 +804,7 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
       riskAnalysisErrors,
       createEvent,
       updateEvent,
+      deleteEvent,
       toggleTask,
       createTask,
       updateTask,

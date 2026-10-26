@@ -4,16 +4,19 @@
 
 UTSAV AI is a celebration and event planner built for **PromptWars Virtual — Challenge 5**.
 The repository contains the Step 1–10 feature set plus the **Step 11 deployment-readiness**
-work. The dashboard, event browsing, creation and editing, sample-data controls, settings,
-routing, per-event budget planning, deterministic repair proposals, deterministic event-rescue
-analysis with explicit atomic approval, guarded local persistence with schema versioning and
-recovery, timeline and task management, guest and RSVP management, a deterministic catering
-estimator, a centralized deterministic Risk Intelligence engine with reconciliation and
-dismissal history, validated JSON export/import, and an advisory AI Planner with a server-side
-API provider boundary are implemented. The Node server can also serve the production SPA and a
-health endpoint, and a single-service Render Blueprint is prepared. **No deployment has been
-performed**: there is no public URL, hosted data store, account system, cloud sync, DNS, or
-verified platform TLS. Event deletion and any server-side planning-data backend do not exist.
+work. The dashboard, event browsing, creation, editing, and deletion, sample-data controls,
+settings, routing, per-event budget planning, deterministic repair proposals, deterministic
+event-rescue analysis with explicit atomic approval, guarded local persistence with schema
+versioning and recovery, timeline and task management, guest and RSVP management, a
+deterministic catering estimator, a centralized deterministic Risk Intelligence engine with
+reconciliation and dismissal history, validated JSON export/import, and an advisory AI Planner
+with a server-side API provider boundary are implemented. The Node server can also serve the
+production SPA and a health endpoint, and a single-service Render Blueprint is prepared.
+**A public static demo is deployed** at **https://utsav-ai-9evw6i99uw4.qoder.website**
+(Qoder Sites, HTTPS). That deployment serves the built SPA only: the Node server, `/api`
+routes, and provider proxy are **not deployed**, so the AI Planner reports **Unavailable** and
+the deterministic outline is used. There is no hosted data store, account system, cloud sync,
+or server-side planning-data backend; workspace data stays in each visitor's browser.
 
 Do not describe planned behavior as implemented. Risk Intelligence is a working deterministic
 module; it is not an AI feature and does not score risks with a predictive model. The AI
@@ -22,8 +25,10 @@ validation, risk severity, feasibility, and approval.
 
 ## Architecture boundaries
 
-- `src/app/` owns the application entry point, routes, and global styles.
-- `src/components/` contains small, reusable presentational components.
+- `src/app/` owns the application entry point, route definitions and lazy page mapping, the
+  top-level render error boundary, and global styles.
+- `src/components/` contains small, reusable presentational components, including the app
+  shell and the route-loading fallback.
 - `src/features/` owns feature-specific UI, state, and domain logic. Feature folders are
   isolated by responsibility.
 - `src/features/workspace/` owns the workspace provider, reducer, guarded local storage,
@@ -61,7 +66,8 @@ validation, risk severity, feasibility, and approval.
   outside the configured root or bypass API routing. Shared AI schemas are imported from
   `src/features/ai/contracts.ts` so browser and server validation cannot drift.
 - `render.yaml`, `.node-version`, and `docs/DEPLOYMENT.md` describe the prepared single-service
-  deployment. They must not be used to claim that a deployment exists.
+  deployment. They must not be used to claim that the Node service is deployed; the live demo
+  is the static Qoder Sites build documented in the same guide.
 - `src/lib/` contains framework-free utilities.
 - `src/services/` is reserved for future in-browser I/O boundaries. Components must not call
   external APIs directly; the AI client is the only browser code that calls `/api`.
@@ -164,7 +170,13 @@ Report failures honestly. Never claim a test passed without running it.
   answers, budget categories, reserve, protected allocations, and record ID. A changed total
   budget flows through `withUpdatedBudgetTotal`; an unchanged total leaves the budget object
   untouched. A changed date must be today or later, while an unchanged saved past date stays
-  editable. There is no event deletion.
+  editable.
+- Event deletion goes through the workspace reducer and removes the selected event together
+  with every record scoped to it: its tasks, guests, activities, catering estimate, risk
+  findings, and rescue-proposal snapshots. Records belonging to other events are untouched.
+  The UI must require explicit confirmation, disclose the affected record counts, and warn
+  that there is no undo; Settings export is the recovery path. Deletion must never be silent
+  or implied by another action.
 - Timeline overlaps are potential conflicts surfaced for review. They may be intentional
   and must never be resolved by silently moving, merging, or deleting an activity.
 - Task status is the union `'open' | 'completed'`; do not add a parallel completion boolean.
@@ -185,6 +197,12 @@ Report failures honestly. Never claim a test passed without running it.
 - Routing uses React Router DOM 7 with real routes for every navigation destination.
   Workspace state uses React context plus `useReducer`; do not add a state library without a
   concrete requirement.
+- App-shell reliability: feature pages are lazy-loaded in `src/app/App.tsx` and rendered
+  through the Suspense fallback in `AppLayout`; keep their named exports or update the lazy
+  mapping. `AppErrorBoundary` wraps the router and workspace provider, must not depend on
+  router or workspace context, and must never render raw error text. App-shell tests that
+  render a lazy page must allow for chunk loading; re-check route loading and recovery in a
+  browser when the shell or chunking changes.
 - Risk Intelligence is deterministic, in-process, and read-only. Every finding has a stable
   detection ID derived from the event and rule (plus an optional entity key), a category,
   severity, certainty, evidence, recommended action, related entity references, detection
@@ -226,18 +244,14 @@ Report failures honestly. Never claim a test passed without running it.
   variables, never from `VITE_*` values, source, or committed configuration. Requests use one
   bounded provider attempt with an abort timeout, output-token cap, body limit, per-client
   fixed-window rate limit, JSON-only endpoint, and safe error envelope with a request ID.
-  Responses use `no-store`, no CORS, and safe logs. Never add an automatic retry loop or log
+  Responses use `no-store`, no CORS, `X-Frame-Options: DENY`, and safe logs. Never add an automatic retry loop or log
   a key, prompt, provider body, or stack trace.
 - Production static serving is opt-in through `SERVE_STATIC=true` and must stay same-origin
   with `/api`. The static handler must keep rejecting path traversal, dotfiles, and dot
   segments; must not serve API paths; must return 404 for missing assets; and must leave
   `/api/health` independent of AI configuration. Do not hard-code a localhost API URL into
   production client code; the browser calls relative `/api` paths.
-- Deployment is prepared but has not occurred. Do not create hosting services, DNS records,
-  or public URLs, and do not claim a deployment, TLS, or post-deploy smoke test without
-  explicit user authorization and verifiable results. Keep AI credentials in the hosting
-  platform's server-side environment only; the prepared service must remain usable with a
-  clear **Not configured** AI state when they are absent.
+- A public static demo is live at `https://utsav-ai-9evw6i99uw4.qoder.website`; the Node/Render service is not deployed. Do not create additional hosting services, DNS records, or public URLs, and do not claim a new deployment, Node/API hosting, TLS, or post-deploy smoke test without explicit user authorization and verifiable results. Keep AI credentials in the hosting platform's server-side environment only; the prepared service must remain usable with a clear **Not configured** AI state when they are absent.
 - AI tests must mock the provider or use an ephemeral local server. Never make paid calls,
   require real credentials, or put real keys in fixtures. Cover missing credentials,
   timeouts, provider errors, request/size limits, rate limiting, malformed output, invalid

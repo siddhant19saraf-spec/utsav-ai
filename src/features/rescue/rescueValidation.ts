@@ -6,6 +6,7 @@ import { EMERGENCY_RESERVE_CATEGORY_ID, MAX_BUDGET_AMOUNT_MINOR } from '@/featur
 import { validateBudget } from '@/features/budget/validation';
 import { isValidIsoDate } from '@/lib/date';
 import { createEventSnapshotSignature } from '@/lib/eventSnapshot';
+import { MAX_EVENT_GUESTS } from '@/lib/limits';
 import { formatMoney, isValidMoney } from '@/lib/money';
 import type { BudgetCategory, BudgetFlexibility } from '@/types/budget';
 import type { CelebrationEvent, EventSetting, Money } from '@/types/domain';
@@ -17,7 +18,7 @@ import type {
   RescueValidationResult,
 } from './rescueTypes';
 
-export const MAX_RESCUE_GUESTS = 100_000;
+export const MAX_RESCUE_GUESTS = MAX_EVENT_GUESTS;
 export const MAX_RESCUE_THEME_LENGTH = 80;
 
 const eventSettings = new Set<string>(['indoor', 'outdoor', 'mixed']);

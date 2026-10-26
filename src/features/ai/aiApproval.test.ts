@@ -273,6 +273,31 @@ describe('AI plan approval', () => {
     expect(persist).not.toHaveBeenCalled();
   });
 
+  it('rejects a selected activity that duplicates a completed saved activity', () => {
+    const workspace = makeApprovalWorkspace({
+      activities: [
+        makeActivity({
+          id: 'completed-activity',
+          eventId: 'event-1',
+          title: 'Guest welcome',
+          startsAt: '2030-12-01T17:00',
+          endsAt: '2030-12-01T17:30',
+          status: 'completed',
+        }),
+      ],
+    });
+    const proposal = makeProposal(workspace);
+    const { dependencies, persist } = makeDependencies();
+    const outcome = approveAiPlan(workspace, proposal, dependencies, options);
+
+    expect(outcome.result).toMatchObject({ ok: false, code: 'invalid' });
+    expect(outcome.result.ok ? '' : outcome.result.message).toContain(
+      'already on the saved timeline',
+    );
+    expect(outcome.workspace).toBe(workspace);
+    expect(persist).not.toHaveBeenCalled();
+  });
+
   it('blocks a selected task that duplicates an existing saved title', () => {
     const workspace = makeApprovalWorkspace({
       tasks: [

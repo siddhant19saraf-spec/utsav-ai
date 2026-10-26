@@ -9,15 +9,29 @@ Notable changes to UTSAV AI are recorded here. The project does not publish tagg
 - GitHub Actions workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) that runs `npm ci`, type checking, linting, tests, and the production build on pushes and pull requests to `main`.
 - GitHub issue forms for bug reports and feature requests, a pull request template, [`SECURITY.md`](SECURITY.md), and [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - Screenshots of the running application in [`docs/screenshots/`](docs/screenshots/), captured from the bundled sample workspace: dashboard, Budget Planner, Event Rescue proposal, Risk Intelligence, AI Planner unavailable state, and compact layout.
+- Event deletion with explicit confirmation, an affected-record summary, and cascading removal of the event's tasks, guests, activities, catering estimate, risk findings, and rescue-proposal snapshots. Other events are untouched; export remains the recovery path.
+- Route-level code splitting so feature pages load on demand instead of in one 840.00 kB JavaScript bundle, with a shell-preserving loading card that exposes a status announcement and respects reduced motion.
+- A top-level application error boundary with a focused, safe recovery screen, no raw error detail, retry and reload actions, and confirmed recovery after a forced chunk-load failure.
+- A keyboard-activation regression test for the Event Rescue analysis action, verifying that submitting from the keyboard moves focus to the analysis result.
+- A public static deployment of the built SPA on Qoder Sites at <https://utsav-ai-9evw6i99uw4.qoder.website> over HTTPS. The deployment serves `dist/` with SPA fallback and no Node API, so the AI Planner reports **Unavailable** and the deterministic outline is used.
+- An MIT `LICENSE` file; the project is now explicitly reusable with attribution.
 
 ### Changed
 
 - README now includes CI and technology badges, a screenshot tour, repository automation details, and links to the contribution, security, and changelog documents.
+- README now documents the recorded challenge alignment, target persona, problem significance, assumptions, and the deterministic decision-engine boundaries.
 - Removed outdated statements that the repository had no CI workflow or screenshots.
+- Updated documentation to distinguish the live static deployment from the prepared-but-undeployed Node/Render service: public URL, AI **Unavailable** state, platform-managed HTTPS, observed headers, localStorage limits, and the third-party site watermark.
+- Updated the automated baseline to 512 tests across 50 files and recorded the route-split build sizes: 448.69 kB entry chunk (131.75 kB gzip), 74.98 kB largest route chunk, and 54.48 kB CSS (9.52 kB gzip).
+
+### Fixed
+
+- Saved Event Rescue proposal snapshots were skipped during workspace load because the loader capped the stored `originalEventSignature` at 200 characters while the real canonical event signature is roughly 2,400–2,500 characters. The cap is now 65,536, and a round-trip regression test saves and reloads a snapshot carrying the full signature.
 
 ### Security
 
 - Documented private vulnerability reporting and the project's security scope, privacy limits, and known gaps.
+- Recorded that the live static responses were observed without a Content-Security-Policy or `X-Frame-Options`, that the static host serves no `/api` routes, and that no provider call was made.
 
 ## [0.1.0] - 2026-10-25
 
@@ -39,8 +53,8 @@ Initial public source snapshot of the PromptWars Virtual — Challenge 5 prototy
 
 ### Known limitations
 
-- No event deletion, accounts, cloud sync, payments, vendor integrations, live weather, or booking confirmation.
+- No event deletion at this snapshot (added in Unreleased), accounts, cloud sync, payments, vendor integrations, live weather, or booking confirmation.
 - No hosted deployment or verified public URL.
 - AI provider behavior was verified with mocked tests only; no live-provider call is claimed.
-- The production build is a single JavaScript chunk, and there is no committed browser E2E suite.
+- At this snapshot the production build was a single JavaScript chunk (route-level code splitting was added in Unreleased), and there is still no committed browser E2E suite.
 - No license has been chosen; see the README license section.

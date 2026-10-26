@@ -2,7 +2,7 @@
 
 A three-to-four-minute, live demonstration of the features that actually exist in this repository. The script uses the bundled fictional sample workspace and the verified Event Rescue budget-reduction scenario.
 
-This is a **script**, not evidence that a demo was recorded. No video, hosted demo, or deployment is included. Static screenshots of the running app exist in [`docs/screenshots/`](screenshots/), but they are not a recording. A deployment guide is prepared in [DEPLOYMENT.md](DEPLOYMENT.md), but no public URL exists and no deployment has been performed.
+This is a **script**, not evidence that a demo was recorded. No video is included. Static screenshots of the running app exist in [`docs/screenshots/`](screenshots/), but they are not a recording. A public static demo is live at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**; it serves the SPA only, so the AI Planner reports **Unavailable** there and the deterministic outline is used. The optional Node/API service is prepared in [DEPLOYMENT.md](DEPLOYMENT.md) but not deployed. For a fully local run with the API, follow [SETUP.md](SETUP.md).
 
 ## Demo at a glance
 
@@ -221,7 +221,7 @@ Use this only if you have already confirmed the exact environment and provider w
 
 **Say:**
 
-> “UTSAV AI is a local-first competition prototype. The differentiator is Event Rescue: it detects the problem, explains the evidence, proposes a constrained repair, validates the before-and-after plan, and asks for approval. No hosted deployment, accounts, vendor integrations, or cloud sync are claimed. Plan smarter. Celebrate better.”
+> “UTSAV AI is a local-first competition prototype. The differentiator is Event Rescue: it detects the problem, explains the evidence, proposes a constrained repair, validates the before-and-after plan, and asks for approval. The public demo is a static build: no hosted API, accounts, vendor integrations, or cloud sync are claimed. Plan smarter. Celebrate better.”
 
 ## Backup demo path
 

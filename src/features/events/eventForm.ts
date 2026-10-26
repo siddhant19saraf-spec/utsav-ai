@@ -1,10 +1,11 @@
 import type { CelebrationEvent, EventCategory } from '@/types/domain';
 import { addDays, isValidIsoDate } from '@/lib/date';
 import { eventCategories } from '@/lib/eventMeta';
+import { MAX_BUDGET_AMOUNT_MINOR, MAX_EVENT_GUESTS } from '@/lib/limits';
 import { formatMinorForInput, parseRupeesToMinor } from '@/lib/money';
 import type { EventDraft } from './eventMutations';
 
-export const MAX_EVENT_BUDGET_MINOR = 100_000_000_000;
+export const MAX_EVENT_BUDGET_MINOR = MAX_BUDGET_AMOUNT_MINOR;
 
 export interface EventFormValues {
   readonly name: string;
@@ -37,7 +38,9 @@ function parseGuestCount(value: string): number | null {
   }
 
   const count = Number(normalized);
-  return Number.isSafeInteger(count) && count >= 1 && count <= 100_000 ? count : null;
+  return Number.isSafeInteger(count) && count >= 1 && count <= MAX_EVENT_GUESTS
+    ? count
+    : null;
 }
 
 export function getInitialEventForm(todayIso: string): EventFormValues {

@@ -1,7 +1,8 @@
-import { CalendarDays, Plus, Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { AlertTriangle, CalendarDays, Plus, Search, Trash2 } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { EventCard } from '@/components/EventCard';
+import { ModalDialog } from '@/components/ModalDialog';
 import { PageHeader } from '@/components/PageHeader';
 import { toIsoDate } from '@/lib/date';
 import { planningStatuses, planningStatusMap } from '@/lib/eventMeta';
@@ -25,12 +26,15 @@ export function EventsPage() {
     hasSampleData,
     createEvent,
     updateEvent,
+    deleteEvent,
     loadDemoData,
     removeDemoData,
   } = useWorkspace();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<EventStatusFilter>('all');
   const [dialog, setDialog] = useState<EventDialogState | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const keepEventButtonRef = useRef<HTMLButtonElement>(null);
   const [announcement, setAnnouncement] = useState('');
   const todayIso = toIsoDate(new Date());
   const filteredEvents = filterAndSortEvents(workspace.events, search, status, todayIso);
@@ -42,6 +46,30 @@ export function EventsPage() {
       : undefined;
   const dialogOpen =
     dialog !== null && (dialog.mode === 'create' || editingEvent !== undefined);
+  const pendingDeleteEvent = pendingDeleteId
+    ? workspace.events.find((event) => event.id === pendingDeleteId)
+    : undefined;
+  const pendingDeleteCounts = pendingDeleteEvent
+    ? {
+        tasks: workspace.tasks.filter(
+          (task) => task.eventId === pendingDeleteEvent.id,
+        ).length,
+        guests: workspace.guests.filter(
+          (guest) => guest.eventId === pendingDeleteEvent.id,
+        ).length,
+        activities: workspace.activities.filter(
+          (activity) => activity.eventId === pendingDeleteEvent.id,
+        ).length,
+        catering: workspace.cateringEstimates.some(
+          (estimate) => estimate.eventId === pendingDeleteEvent.id,
+        )
+          ? 'Saved'
+          : 'None',
+        risks: (workspace.riskFindings ?? []).filter(
+          (finding) => finding.eventId === pendingDeleteEvent.id,
+        ).length,
+      }
+    : null;
 
   const handleCloseDialog = useCallback(() => setDialog(null), []);
 
@@ -73,6 +101,20 @@ export function EventsPage() {
     (eventId: string) => setDialog({ mode: 'edit', eventId }),
     [],
   );
+
+  const handleCloseDelete = useCallback(() => setPendingDeleteId(null), []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!pendingDeleteEvent) {
+      return;
+    }
+
+    deleteEvent(pendingDeleteEvent.id);
+    setPendingDeleteId(null);
+    setAnnouncement(
+      `Deleted ${pendingDeleteEvent.name} and its related planning records. This cannot be undone.`,
+    );
+  }, [deleteEvent, pendingDeleteEvent]);
 
   function clearFilters() {
     setSearch('');
@@ -186,6 +228,8 @@ export function EventsPage() {
         </p>
       </section>
 
+      <h2 className="sr-only">Events</h2>
+
       {workspace.events.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
@@ -229,6 +273,7 @@ export function EventsPage() {
               event={event}
               riskSummary={riskSummaries.get(event.id)}
               onEdit={handleEditEvent}
+              onDelete={setPendingDeleteId}
             />
           ))}
         </div>
@@ -240,6 +285,89 @@ export function EventsPage() {
         onClose={handleCloseDialog}
         onSubmit={dialog?.mode === 'edit' ? handleUpdateEvent : handleCreateEvent}
       />
+
+      {pendingDeleteEvent && pendingDeleteCounts ? (
+        <ModalDialog
+          open
+          eyebrow="Permanent action"
+          title={`Delete “${pendingDeleteEvent.name}”?`}
+          description="This permanently removes the event, its budget, and every planning record attached to it from this browser. It cannot be undone."
+          onClose={handleCloseDelete}
+          initialFocusRef={keepEventButtonRef}
+        >
+          <div className="space-y-5">
+            <dl className="grid grid-cols-2 gap-4 rounded-2xl border border-line bg-surface-muted/40 px-4 py-4 sm:grid-cols-5">
+              <div>
+                <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-soft uppercase">
+                  Tasks
+                </dt>
+                <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">
+                  {pendingDeleteCounts.tasks}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-soft uppercase">
+                  Guests
+                </dt>
+                <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">
+                  {pendingDeleteCounts.guests}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-soft uppercase">
+                  Activities
+                </dt>
+                <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">
+                  {pendingDeleteCounts.activities}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-soft uppercase">
+                  Catering
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-ink">
+                  {pendingDeleteCounts.catering}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-soft uppercase">
+                  Risks
+                </dt>
+                <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">
+                  {pendingDeleteCounts.risks}
+                </dd>
+              </div>
+            </dl>
+
+            <p className="flex items-start gap-2 rounded-2xl border border-rust-100 bg-rust-50 px-4 py-3 text-xs leading-relaxed text-rust-700">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>
+                There is no undo. Export your workspace from Settings first if you
+                might need this event later.
+              </span>
+            </p>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                ref={keepEventButtonRef}
+                type="button"
+                onClick={handleCloseDelete}
+                className="btn-secondary"
+              >
+                Keep event
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-rust-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust-600"
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                Delete event permanently
+              </button>
+            </div>
+          </div>
+        </ModalDialog>
+      ) : null}
     </div>
   );
 }

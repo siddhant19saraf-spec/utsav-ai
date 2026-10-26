@@ -265,11 +265,13 @@ export function validateAiPlan(
   /* Timeline ------------------------------------------------------------ */
 
   const existingActivities = event
-    ? workspace.activities.filter(
-        (activity) =>
-          activity.eventId === event.id && activity.status === 'scheduled',
-      )
+    ? workspace.activities.filter((activity) => activity.eventId === event.id)
     : [];
+  // Completed activities cannot conflict with new scheduling, but re-adding
+  // one under the same title and start is still a duplicate.
+  const scheduledActivities = existingActivities.filter(
+    (activity) => activity.status === 'scheduled',
+  );
   const validSuggestions: TimelineActivity[] = [];
   const suggestionKeys = new Map<string, number[]>();
 
@@ -350,7 +352,7 @@ export function validateAiPlan(
 
   if (validSuggestions.length > 0) {
     const overlaps = findActivityOverlaps([
-      ...existingActivities,
+      ...scheduledActivities,
       ...validSuggestions,
     ]);
 

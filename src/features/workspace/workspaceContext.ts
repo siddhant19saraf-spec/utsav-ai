@@ -38,6 +38,8 @@ export interface WorkspaceContextValue {
   readonly persistence: WorkspacePersistence;
   readonly createEvent: (draft: EventDraft) => CelebrationEvent;
   readonly updateEvent: (eventId: string, draft: EventDraft) => void;
+  /** Removes the event and every planning record scoped to it. Requires UI confirmation. */
+  readonly deleteEvent: (eventId: string) => void;
   readonly toggleTask: (taskId: string) => void;
   readonly createTask: (eventId: string, draft: TaskDraft) => PlanningTask;
   readonly updateTask: (taskId: string, draft: TaskDraft) => void;

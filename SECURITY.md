@@ -2,7 +2,7 @@
 
 ## Project status
 
-UTSAV AI is a local-first hackathon prototype. It has no hosted production service, account system, or server-side planning database. The Node server is an optional stateless API proxy and static file server. Do not assume that a deployment, TLS configuration, or platform hardening described in the documentation has occurred.
+UTSAV AI is a local-first hackathon prototype. It has no account system or server-side planning database. The Node server is an optional stateless API proxy and static file server, and it is not deployed; the live demo is a static SPA build that serves no `/api` routes. Do not assume that a Node deployment, API TLS configuration, or platform hardening beyond the recorded static checks has occurred.
 
 ## Supported versions
 
@@ -62,4 +62,4 @@ The repository documents its trust boundaries and known limitations in the [READ
 - AI context excludes guest records and other events;
 - approvals revalidate and persist before in-memory state changes;
 - no Content-Security-Policy, application authentication, or encrypted local storage is implemented;
-- the prepared deployment would rely on the hosting platform for HTTPS, and that deployment has not occurred.
+- the live static demo relies on the hosting platform for HTTPS and serves no `/api` routes; the Node/API service that would call a provider is prepared but not deployed.

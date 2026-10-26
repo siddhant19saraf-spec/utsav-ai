@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEventSnapshotSignature } from '@/lib/eventSnapshot';
 import { rupees } from '@/lib/money';
 import type { Workspace } from '@/types/domain';
 import {
@@ -242,6 +243,27 @@ describe('saveWorkspaceToStorage and loadWorkspaceFromStorage', () => {
         }),
       ],
       rescueProposalSnapshots: [makeProposalSnapshot()],
+    });
+
+    expect(saveWorkspaceToStorage(workspace, storage)).toEqual({ ok: true });
+    expect(loadWorkspaceFromStorage(storage)).toEqual({
+      status: 'loaded',
+      workspace,
+    });
+  });
+
+  it('round-trips a rescue snapshot carrying the full event signature', () => {
+    const storage = createStorage();
+    const event = makeEvent({ id: 'event-1' });
+    const signature = createEventSnapshotSignature(event);
+
+    expect(signature.length).toBeGreaterThan(200);
+
+    const workspace = makeWorkspace({
+      events: [event],
+      rescueProposalSnapshots: [
+        makeProposalSnapshot({ originalEventSignature: signature }),
+      ],
     });
 
     expect(saveWorkspaceToStorage(workspace, storage)).toEqual({ ok: true });
@@ -537,6 +559,59 @@ describe('exportWorkspaceToJson and importWorkspaceFromJson', () => {
       ok: false,
       message: expect.stringMatching(/version is not supported/i),
     });
+  });
+
+  it('rejects an imported budget above the supported amount limit', () => {
+    const workspace = makeWorkspace({
+      events: [
+        makeEvent({
+          id: 'over-limit',
+          budget: makeBudget({
+            eventId: 'over-limit',
+            totalAvailable: {
+              amountMinor: 100_000_000_001,
+              currency: 'INR',
+            },
+          }),
+        }),
+      ],
+    });
+
+    expect(
+      importWorkspaceFromJson(storedValue({ version: 2, workspace })),
+    ).toMatchObject({ ok: false });
+  });
+
+  it('rejects an imported guest count above the supported limit', () => {
+    const workspace = makeWorkspace({
+      events: [makeEvent({ id: 'over-limit', expectedGuests: 100_001 })],
+    });
+
+    expect(
+      importWorkspaceFromJson(storedValue({ version: 2, workspace })),
+    ).toMatchObject({ ok: false });
+  });
+
+  it('accepts values exactly at the supported limits', () => {
+    const workspace = makeWorkspace({
+      events: [
+        makeEvent({
+          id: 'at-limit',
+          expectedGuests: 100_000,
+          budget: makeBudget({
+            eventId: 'at-limit',
+            totalAvailable: {
+              amountMinor: 100_000_000_000,
+              currency: 'INR',
+            },
+          }),
+        }),
+      ],
+    });
+
+    expect(
+      importWorkspaceFromJson(storedValue({ version: 2, workspace })),
+    ).toMatchObject({ ok: true });
   });
 
   it('refuses to export a workspace that would not import', () => {

@@ -8,7 +8,7 @@ This guide covers running UTSAV AI on a local machine for evaluation, developmen
 - Optional AI suggestions served by a Node.js API process that proxies one external, OpenAI-compatible provider.
 - Optionally, the same Node process can serve the built SPA for local production-style verification.
 
-There is no database, Docker image, cloud account, or external service required for the core planner. AI is optional. Hosting configuration is prepared but not deployed; see [DEPLOYMENT.md](DEPLOYMENT.md).
+There is no database, Docker image, cloud account, or external service required for the core planner. AI is optional. A public static demo is live at **https://utsav-ai-9evw6i99uw4.qoder.website**; the Node/API service is prepared but not deployed. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Supported environment
 
@@ -148,7 +148,7 @@ npm run build
 npm run preview
 ```
 
-`npm run build` runs `tsc -b && vite build` and writes `dist/`. `npm run preview` serves that output locally. The current build emits a warning that the main JavaScript chunk is larger than 500 kB; this is a warning, not a failure. See the bundle sizes in the root README.
+`npm run build` runs `tsc -b && vite build` and writes `dist/`. `npm run preview` serves that output locally. Feature pages are emitted as separate chunks and load on demand; see the measured bundle sizes in the root README. There is no chunk-size warning in the current build.
 
 `vite preview` uses the same `/api` proxy configuration as `vite dev`, so the optional local API can be exercised in preview if it is running. It is a Vite preview server, not the production server.
 
@@ -205,7 +205,7 @@ Import is a replace operation, not a merge. The app validates the whole file, sh
 | `npm run preview` | Serve the built client with Vite's preview server |
 | `npm start` | Run the Node server (API only unless `SERVE_STATIC=true`) |
 
-Verification results as of 2026-10-25: typecheck passed, lint passed with zero warnings, 496 tests passed across 47 files, and the production build passed. `npm audit` reported 0 vulnerabilities. The tests use mocked AI providers and require no real key, network access to a model, or paid request.
+Verification results as of 2026-10-26: typecheck passed, lint passed with zero warnings, 512 tests passed across 50 files, and the production build passed. `npm audit` reported 0 vulnerabilities. The tests use mocked AI providers and require no real key, network access to a model, or paid request.
 
 ## 7. Troubleshooting
 
@@ -253,9 +253,13 @@ Imports must be a valid UTSAV AI export under 5,000,000 characters and must pass
 
 Export a backup, remove the sample workspace if it is not needed, and free browser space. The app keeps unsaved edits in the tab but cannot guarantee persistence after closing. Safari/private browsing and restrictive browser settings may block storage entirely.
 
-### Build warning about chunk size
+### A route fails to load after a new build or deployment
 
-A warning such as `Some chunks are larger than 500 kB after minification` is expected for the current single-bundle build. It does not fail the build. Bundle splitting is listed as future work, not implemented behavior.
+**Symptom:** navigating to a feature page shows the recovery screen, or the browser console reports a missing hashed chunk.
+
+**Cause:** feature pages are loaded as separate hashed chunks. A browser tab left open across a new build can still reference chunk names that the server has replaced.
+
+**Action:** choose **Reload app** on the recovery screen, or refresh the tab, to fetch the current `index.html` and its chunks. Restarting a local dev or preview server while a tab is open can produce the same transient state.
 
 ### `SERVE_STATIC=true` exits with a static-directory error
 
@@ -279,7 +283,7 @@ They do not. The suite uses mocks and local test paths. If a test fails, capture
 
 - [Project overview and feature status](../README.md)
 - [Architecture](ARCHITECTURE.md)
-- [Deployment guide](DEPLOYMENT.md) (prepared, not deployed)
+- [Deployment guide](DEPLOYMENT.md) (static demo live; Node/API prepared, not deployed)
 - [Competition demo script](DEMO_SCRIPT.md)
 - [Detailed feature status](FEATURE_STATUS.md)
 - Engineering rules: [AGENTS.md](../AGENTS.md)

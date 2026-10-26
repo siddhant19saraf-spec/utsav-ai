@@ -159,6 +159,31 @@ describe('AI plan validation', () => {
       ),
     ).toBe(true);
     expect(savedDuplicate.applyableTimelineIndexes).toEqual([]);
+
+    const completedDuplicate = validateAiPlan(
+      makeAiPlan(),
+      makeAiRequest(),
+      makeValidationWorkspace({
+        activities: [
+          makeActivity({
+            id: 'activity-completed',
+            eventId: 'event-1',
+            title: 'Guest welcome',
+            startsAt: '2030-12-01T17:00',
+            endsAt: '2030-12-01T17:30',
+            status: 'completed',
+          }),
+        ],
+      }),
+      todayIso,
+    );
+
+    expect(
+      completedDuplicate.issues.some(
+        (issue) => issue.code === 'timeline-duplicate',
+      ),
+    ).toBe(true);
+    expect(completedDuplicate.applyableTimelineIndexes).toEqual([]);
   });
 
   it('blocks invalid and duplicate tasks while allowing past-due review notes', () => {

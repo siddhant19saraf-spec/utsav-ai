@@ -1,15 +1,61 @@
+import { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
-import { AiPlanningPage } from '@/features/ai/AiPlanningPage';
-import { BudgetPlannerPage } from '@/features/budget/BudgetPlannerPage';
-import { DashboardPage } from '@/features/dashboard/DashboardPage';
-import { EventsPage } from '@/features/events/EventsPage';
-import { GuestsPage } from '@/features/guests/GuestsPage';
-import { EventRescuePage } from '@/features/rescue/EventRescuePage';
-import { RiskIntelligencePage } from '@/features/risks/RiskIntelligencePage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
-import { TimelinePage } from '@/features/timeline/TimelinePage';
 import { NotFoundPage } from './NotFoundPage';
+
+const DashboardPage = lazy(() =>
+  import('@/features/dashboard/DashboardPage').then((module) => ({
+    default: module.DashboardPage,
+  })),
+);
+
+const EventsPage = lazy(() =>
+  import('@/features/events/EventsPage').then((module) => ({
+    default: module.EventsPage,
+  })),
+);
+
+const BudgetPlannerPage = lazy(() =>
+  import('@/features/budget/BudgetPlannerPage').then((module) => ({
+    default: module.BudgetPlannerPage,
+  })),
+);
+
+const EventRescuePage = lazy(() =>
+  import('@/features/rescue/EventRescuePage').then((module) => ({
+    default: module.EventRescuePage,
+  })),
+);
+
+const TimelinePage = lazy(() =>
+  import('@/features/timeline/TimelinePage').then((module) => ({
+    default: module.TimelinePage,
+  })),
+);
+
+const GuestsPage = lazy(() =>
+  import('@/features/guests/GuestsPage').then((module) => ({
+    default: module.GuestsPage,
+  })),
+);
+
+const RiskIntelligencePage = lazy(() =>
+  import('@/features/risks/RiskIntelligencePage').then((module) => ({
+    default: module.RiskIntelligencePage,
+  })),
+);
+
+const AiPlanningPage = lazy(() =>
+  import('@/features/ai/AiPlanningPage').then((module) => ({
+    default: module.AiPlanningPage,
+  })),
+);
+
+const SettingsPage = lazy(() =>
+  import('@/features/settings/SettingsPage').then((module) => ({
+    default: module.SettingsPage,
+  })),
+);
 
 export function App() {
   return (

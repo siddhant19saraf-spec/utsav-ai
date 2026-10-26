@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
 import { App } from './App';
+import { AppErrorBoundary } from './AppErrorBoundary';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -13,10 +14,12 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <BrowserRouter>
-      <WorkspaceProvider>
-        <App />
-      </WorkspaceProvider>
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <BrowserRouter>
+        <WorkspaceProvider>
+          <App />
+        </WorkspaceProvider>
+      </BrowserRouter>
+    </AppErrorBoundary>
   </StrictMode>,
 );

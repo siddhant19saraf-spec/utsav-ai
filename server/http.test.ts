@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Server } from 'node:http';
+import net from 'node:net';
 import {
   aiApiErrorSchema,
   aiPlanEnvelopeSchema,
@@ -132,6 +133,28 @@ async function readError(response: Response) {
   return parsed.data.error;
 }
 
+function sendRawRequest(baseUrl: string, payload: string): Promise<string> {
+  const { port } = new URL(baseUrl);
+
+  return new Promise((resolve, reject) => {
+    const socket = net.connect(Number(port), '127.0.0.1', () => {
+      socket.write(payload);
+    });
+    let responseText = '';
+
+    socket.setEncoding('utf8');
+    socket.on('data', (chunk: string) => {
+      responseText += chunk;
+    });
+    socket.on('end', () => resolve(responseText));
+    socket.on('error', reject);
+    socket.setTimeout(2_000, () => {
+      socket.destroy();
+      reject(new Error('Expected a response to the raw request.'));
+    });
+  });
+}
+
 describe('AI HTTP API boundary', () => {
   it('exposes a lightweight health endpoint without AI configuration', async () => {
     const baseUrl = await startTestServer({ configured: false });
@@ -144,9 +167,23 @@ describe('AI HTTP API boundary', () => {
     expect(await response.json()).toEqual({ status: 'ok' });
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(response.headers.get('x-frame-options')).toBe('DENY');
     expect(response.headers.get('access-control-allow-origin')).toBeNull();
     expect(wrongMethod.status).toBe(405);
     expect((await readError(wrongMethod)).code).toBe('method-not-allowed');
+  });
+
+  it('rejects a malformed request target without crashing the server', async () => {
+    const baseUrl = await startTestServer();
+    const responseText = await sendRawRequest(
+      baseUrl,
+      'GET http://[ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n',
+    );
+
+    expect(responseText).toMatch(/^HTTP\/1\.1 400 /);
+    const health = await fetch(`${baseUrl}/api/health`);
+    expect(health.status).toBe(200);
+    expect(await health.json()).toEqual({ status: 'ok' });
   });
 
   it('reports an unconfigured provider without exposing secrets', async () => {

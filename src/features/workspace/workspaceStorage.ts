@@ -1,5 +1,6 @@
 import { isValidIsoDate } from '@/lib/date';
 import { isValidLocalDateTime } from '@/lib/dateTime';
+import { MAX_BUDGET_AMOUNT_MINOR, MAX_EVENT_GUESTS } from '@/lib/limits';
 import { isValidMoney } from '@/lib/money';
 import { validateBudget } from '@/features/budget/validation';
 import type { BudgetCategory, BudgetFlexibility, EventBudget } from '@/types/budget';
@@ -226,6 +227,16 @@ function parseInr(value: unknown, label: string): Money {
   return { amountMinor: value.amountMinor, currency: 'INR' };
 }
 
+function parseBudgetInr(value: unknown, label: string): Money {
+  const money = parseInr(value, label);
+
+  if (money.amountMinor > MAX_BUDGET_AMOUNT_MINOR) {
+    fail(`${label} must stay within the supported ₹100 crore limit.`);
+  }
+
+  return money;
+}
+
 function parseEnum<T extends string>(
   value: unknown,
   allowed: readonly T[],
@@ -303,7 +314,7 @@ function parseFlexibility(value: unknown, label: string): BudgetFlexibility {
 
   return {
     mode,
-    minimumPlanned: parseInr(record.minimumPlanned, `${label} minimum allocation`),
+    minimumPlanned: parseBudgetInr(record.minimumPlanned, `${label} minimum allocation`),
   };
 }
 
@@ -315,8 +326,8 @@ function parseCategory(value: unknown, index: number): BudgetCategory {
   return {
     id: parseString(record.id, `${label} identifier`, { maxLength: 64 }),
     name: parseString(record.name, `${label} name`, { maxLength: 80 }),
-    planned: parseInr(record.planned, `${label} planned amount`),
-    actual: parseInr(record.actual, `${label} actual amount`),
+    planned: parseBudgetInr(record.planned, `${label} planned amount`),
+    actual: parseBudgetInr(record.actual, `${label} actual amount`),
     flexibility: parseFlexibility(record.flexibility, `${label} flexibility`),
     ...(typeof notes === 'undefined' ? {} : { notes }),
   };
@@ -334,11 +345,11 @@ function parseBudget(value: unknown, eventId: string): EventBudget {
   const budget: EventBudget = {
     id: parseString(record.id, 'Budget identifier', { maxLength: 80 }),
     eventId: parseString(record.eventId, 'Budget event identifier', { maxLength: 80 }),
-    totalAvailable: parseInr(record.totalAvailable, 'Total available budget'),
+    totalAvailable: parseBudgetInr(record.totalAvailable, 'Total available budget'),
     categories: categoryValues.map((category, index) => parseCategory(category, index)),
     emergencyReserve: {
       enabled: parseBoolean(reserve.enabled, 'Emergency reserve enabled flag'),
-      target: parseInr(reserve.target, 'Emergency reserve target'),
+      target: parseBudgetInr(reserve.target, 'Emergency reserve target'),
     },
     createdAt: parseTimestamp(record.createdAt, 'Budget creation timestamp'),
     updatedAt: parseTimestamp(record.updatedAt, 'Budget update timestamp'),
@@ -385,9 +396,19 @@ function parseEvent(value: unknown, index: number): CelebrationEvent {
     typeof record.updatedAt === 'undefined'
       ? undefined
       : parseTimestamp(record.updatedAt, `${label} update timestamp`);
+  const expectedGuests = parsePositiveInteger(
+    record.expectedGuests,
+    `${label} expected guests`,
+  );
 
   if (!isValidIsoDate(startsAt)) {
     fail(`${label} start date must use the YYYY-MM-DD calendar format.`);
+  }
+
+  if (expectedGuests > MAX_EVENT_GUESTS) {
+    fail(
+      `${label} expected guests must not exceed ${MAX_EVENT_GUESTS.toLocaleString('en-IN')}.`,
+    );
   }
 
   return {
@@ -395,7 +416,7 @@ function parseEvent(value: unknown, index: number): CelebrationEvent {
     name: parseString(record.name, `${label} name`, { maxLength: 120 }),
     category: parseEnum(record.category, eventCategories, `${label} category`),
     startsAt,
-    expectedGuests: parsePositiveInteger(record.expectedGuests, `${label} expected guests`),
+    expectedGuests,
     budget: parseBudget(record.budget, id),
     status: parseEnum(record.status, planningStatuses, `${label} status`),
     origin: parseEnum(record.origin, origins, `${label} origin`),
@@ -684,7 +705,7 @@ function parseProposalSnapshot(value: unknown, index: number): RiskProposalSnaps
     originalEventSignature: parseString(
       record.originalEventSignature,
       `${label} event signature`,
-      { maxLength: 200 },
+      { maxLength: 65_536 },
     ),
     relatedDataSignature: parseString(
       record.relatedDataSignature,

@@ -11,9 +11,13 @@ import {
   saveWorkspaceToStorage,
 } from '@/features/workspace/workspaceStorage';
 import {
+  makeActivity,
   makeBudget,
+  makeCateringEstimate,
   makeCategory,
   makeEvent,
+  makeGuest,
+  makeTask,
   makeWorkspace,
 } from '@/test/fixtures';
 import { EventsPage } from './EventsPage';
@@ -187,6 +191,85 @@ describe('EventsPage', () => {
     expect(storedAlpha?.budget.totalAvailable).toEqual(rupees(1_000));
     expect(storedAlpha?.budget.categories).toEqual([venueCategory]);
     expect(storedBeta).toEqual(beta);
+  });
+
+  it('deletes one event only after confirmation and removes only its records', async () => {
+    const user = userEvent.setup();
+    const alpha = makeEvent({
+      id: 'alpha',
+      name: 'Alpha Wedding',
+      startsAt: '2099-06-01',
+    });
+    const beta = makeEvent({
+      id: 'beta',
+      name: 'Beta Birthday',
+      startsAt: '2099-07-01',
+    });
+
+    saveWorkspaceToStorage(
+      makeWorkspace({
+        events: [alpha, beta],
+        tasks: [
+          makeTask({ id: 'alpha-task', eventId: 'alpha' }),
+          makeTask({ id: 'beta-task', eventId: 'beta' }),
+        ],
+        guests: [makeGuest({ id: 'alpha-guest', eventId: 'alpha' })],
+        activities: [
+          makeActivity({ id: 'alpha-activity', eventId: 'alpha' }),
+        ],
+        cateringEstimates: [makeCateringEstimate({ eventId: 'alpha' })],
+      }),
+    );
+    renderEventsPage();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Delete Alpha Wedding' }),
+    );
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Delete “Alpha Wedding”?',
+    );
+    expect(screen.getByRole('button', { name: 'Keep event' })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Keep event' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Alpha Wedding' }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Delete Alpha Wedding' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Delete event permanently' }),
+    );
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Alpha Wedding' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Beta Birthday' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Deleted Alpha Wedding/)).toBeInTheDocument();
+
+    const raw = window.localStorage.getItem(WORKSPACE_STORAGE_KEY) ?? '';
+    const parsed = parseStoredWorkspace(raw);
+
+    expect(parsed.ok).toBe(true);
+
+    if (!parsed.ok) {
+      throw new Error('Expected the workspace after deletion to be saved.');
+    }
+
+    expect(parsed.workspace.events.map((event) => event.id)).toEqual(['beta']);
+    expect(parsed.workspace.tasks.map((task) => task.id)).toEqual([
+      'beta-task',
+    ]);
+    expect(parsed.workspace.guests).toEqual([]);
+    expect(parsed.workspace.activities).toEqual([]);
+    expect(parsed.workspace.cateringEstimates).toEqual([]);
   });
 
   it('keeps an invalid edit open without changing saved data', async () => {

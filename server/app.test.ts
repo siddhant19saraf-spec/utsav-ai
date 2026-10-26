@@ -78,6 +78,7 @@ describe('production app server', () => {
     expect(home.headers.get('content-type')).toContain('text/html');
     expect(home.headers.get('cache-control')).toBe('no-cache');
     expect(home.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(home.headers.get('x-frame-options')).toBe('DENY');
 
     expect(nested.status).toBe(200);
     expect(await nested.text()).toContain('SPA shell');

@@ -26,6 +26,7 @@ const MIME_TYPES: Readonly<Record<string, string>> = {
 const BASE_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY',
 } as const;
 
 export interface StaticHandlerOptions {

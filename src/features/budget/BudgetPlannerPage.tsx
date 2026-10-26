@@ -1,6 +1,5 @@
 import {
   CalendarDays,
-  CloudOff,
   Info,
   Plus,
   ShieldAlert,
@@ -42,7 +41,7 @@ function createUniqueCategoryId(categories: readonly BudgetCategory[]): string {
 }
 
 function BudgetPlannerPageShell() {
-  const { workspace, persistence } = useWorkspace();
+  const { workspace } = useWorkspace();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedEventId = searchParams.get('event');
   const selectedEvent =
@@ -69,16 +68,6 @@ function BudgetPlannerPageShell() {
           </Link>
         }
       />
-
-      {persistence.status !== 'local' ? (
-        <div
-          role="status"
-          className="flex items-start gap-3 rounded-2xl border border-gold-200 bg-gold-50 px-4 py-3.5 text-sm text-ink-muted"
-        >
-          <CloudOff className="mt-0.5 size-4 shrink-0 text-gold-700" aria-hidden="true" />
-          <p className="leading-relaxed">{persistence.message}</p>
-        </div>
-      ) : null}
 
       {!selectedEvent ? (
         <EmptyState

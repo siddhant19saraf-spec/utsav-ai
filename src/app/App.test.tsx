@@ -17,6 +17,16 @@ const navigationLabels = [
   'Settings',
 ];
 
+const lazyPageTimeout = { timeout: 5_000 } as const;
+
+function findDashboardHeading() {
+  return screen.findByRole(
+    'heading',
+    { level: 1, name: 'Welcome to UTSAV AI' },
+    lazyPageTimeout,
+  );
+}
+
 function renderApp(initialEntry = '/') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -28,12 +38,10 @@ function renderApp(initialEntry = '/') {
 }
 
 describe('App', () => {
-  it('renders the dashboard shell with all nine navigation destinations', () => {
+  it('renders the dashboard shell with all nine navigation destinations', async () => {
     renderApp();
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Welcome to UTSAV AI' }),
-    ).toBeInTheDocument();
+    expect(await findDashboardHeading()).toBeInTheDocument();
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getAllByText(/plan smarter\. celebrate better\./i).length).toBeGreaterThan(0);
 
@@ -53,19 +61,28 @@ describe('App', () => {
     }
 
     expect(
-      screen.getByRole('heading', { name: 'Ananya & Rohan’s Wedding' }),
+      await screen.findByRole(
+        'heading',
+        { name: 'Ananya & Rohan’s Wedding' },
+        lazyPageTimeout,
+      ),
     ).toBeInTheDocument();
     expect(screen.getAllByText('Sample').length).toBeGreaterThan(0);
-  });
+  }, 15_000);
 
   it('navigates to routed pages and keeps the active item marked', async () => {
     const user = userEvent.setup();
     renderApp();
+    await findDashboardHeading();
 
     await user.click(screen.getByRole('link', { name: 'My Events' }));
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Every celebration, in one place' }),
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Every celebration, in one place' },
+        lazyPageTimeout,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My Events' })).toHaveAttribute(
       'aria-current',
@@ -75,7 +92,11 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'Budget Planner' }));
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Plan every rupee with intent' }),
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Plan every rupee with intent' },
+        lazyPageTimeout,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 2, name: 'Expense categories' }),
@@ -85,11 +106,12 @@ describe('App', () => {
       'aria-current',
       'page',
     );
-  });
+  }, 15_000);
 
   it('opens the mobile navigation, moves focus into it, and closes on selection', async () => {
     const user = userEvent.setup();
     renderApp();
+    await findDashboardHeading();
 
     expect(screen.queryByRole('navigation', { name: 'Mobile primary' })).not.toBeInTheDocument();
 
@@ -104,18 +126,23 @@ describe('App', () => {
     await user.click(within(mobileNavigation).getByRole('link', { name: 'Timeline' }));
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Keep the schedule in view' }),
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Keep the schedule in view' },
+        lazyPageTimeout,
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Mobile primary' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
-  });
+  }, 15_000);
 
   it('closes the mobile navigation with Escape and restores focus to the trigger', async () => {
     const user = userEvent.setup();
     renderApp();
+    await findDashboardHeading();
 
     const openButton = screen.getByRole('button', { name: 'Open navigation menu' });
     await user.click(openButton);
@@ -127,5 +154,5 @@ describe('App', () => {
     expect(restoredButton).toHaveAttribute('aria-expanded', 'false');
     expect(restoredButton).toHaveFocus();
     expect(screen.queryByRole('navigation', { name: 'Mobile primary' })).not.toBeInTheDocument();
-  });
+  }, 15_000);
 });

@@ -262,4 +262,27 @@ describe('EventRescuePage', () => {
       screen.getByRole('heading', { name: 'Describe the change to evaluate' }),
     ).toHaveFocus();
   });
+
+  it('activates the rescue analysis from the keyboard and moves focus to the result', async () => {
+    const user = userEvent.setup();
+    renderRescue();
+
+    const analyzeButton = screen.getByRole('button', {
+      name: 'Analyze rescue options',
+    });
+    analyzeButton.focus();
+    expect(analyzeButton).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Rescue analysis for Wedding',
+      }),
+    ).toHaveFocus();
+    expect(
+      screen.getByRole('region', { name: 'Original versus proposed plan' }),
+    ).toBeInTheDocument();
+  });
 });

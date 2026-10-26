@@ -50,7 +50,16 @@ const JSON_HEADERS = {
   'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY',
 } as const;
+
+function requestPathname(request: IncomingMessage): string | null {
+  try {
+    return new URL(request.url ?? '/', 'http://localhost').pathname;
+  } catch {
+    return null;
+  }
+}
 
 function routeName(path: string): 'health' | 'plan' | 'status' | 'other' {
   if (path === '/api/health') {
@@ -252,7 +261,7 @@ export function createApiHandler(
 
   return (request: IncomingMessage, response: ServerResponse) => {
     const method = request.method ?? 'GET';
-    const path = new URL(request.url ?? '/', 'http://localhost').pathname;
+    const path = requestPathname(request);
     const requestId = createRequestId();
     const startedAt = Date.now();
 
@@ -261,12 +270,23 @@ export function createApiHandler(
 
     response.on('finish', () => {
       logger.info(
-        `[ai-api] route=${routeName(path)} method=${method} status=${response.statusCode} durationMs=${Date.now() - startedAt} request=${requestId}`,
+        `[ai-api] route=${path === null ? 'other' : routeName(path)} method=${method} status=${response.statusCode} durationMs=${Date.now() - startedAt} request=${requestId}`,
       );
     });
 
     void (async () => {
       try {
+        if (path === null) {
+          sendError(
+            response,
+            400,
+            'invalid-request',
+            'The request target was not a valid URL. Nothing was changed.',
+            requestId,
+          );
+          return;
+        }
+
         if (path === '/api/health') {
           if (method !== 'GET') {
             sendError(

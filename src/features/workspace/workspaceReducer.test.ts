@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { rupees } from '@/lib/money';
 import {
+  makeActivity,
   makeBudget,
+  makeCateringEstimate,
   makeCategory,
   makeEvent,
   makeGuest,
+  makeProposalSnapshot,
+  makeRiskFinding,
   makeTask,
   makeWorkspace,
 } from '@/test/fixtures';
@@ -22,6 +26,71 @@ describe('workspaceReducer', () => {
     expect(next.tasks).toBe(workspace.tasks);
     expect(next.guests).toBe(workspace.guests);
     expect(workspace.events.map((event) => event.id)).toEqual(['existing']);
+  });
+
+  it('deletes one event and only its related planning records', () => {
+    const alpha = makeEvent({ id: 'alpha', name: 'Alpha Wedding' });
+    const beta = makeEvent({ id: 'beta', name: 'Beta Birthday' });
+    const workspace = makeWorkspace({
+      events: [alpha, beta],
+      tasks: [
+        makeTask({ id: 'alpha-task', eventId: 'alpha' }),
+        makeTask({ id: 'beta-task', eventId: 'beta' }),
+      ],
+      guests: [
+        makeGuest({ id: 'alpha-guest', eventId: 'alpha' }),
+        makeGuest({ id: 'beta-guest', eventId: 'beta' }),
+      ],
+      activities: [
+        makeActivity({ id: 'alpha-activity', eventId: 'alpha' }),
+        makeActivity({ id: 'beta-activity', eventId: 'beta' }),
+      ],
+      cateringEstimates: [
+        makeCateringEstimate({ eventId: 'alpha' }),
+        makeCateringEstimate({ eventId: 'beta' }),
+      ],
+      riskFindings: [
+        makeRiskFinding({ id: 'alpha-risk', eventId: 'alpha' }),
+        makeRiskFinding({ id: 'beta-risk', eventId: 'beta' }),
+      ],
+      rescueProposalSnapshots: [
+        makeProposalSnapshot({ proposalId: 'alpha-proposal', eventId: 'alpha' }),
+        makeProposalSnapshot({ proposalId: 'beta-proposal', eventId: 'beta' }),
+      ],
+    });
+
+    const next = workspaceReducer(workspace, {
+      type: 'event/deleted',
+      eventId: 'alpha',
+    });
+
+    expect(next.events.map((event) => event.id)).toEqual(['beta']);
+    expect(next.tasks.map((task) => task.id)).toEqual(['beta-task']);
+    expect(next.guests.map((guest) => guest.id)).toEqual(['beta-guest']);
+    expect(next.activities.map((activity) => activity.id)).toEqual([
+      'beta-activity',
+    ]);
+    expect(next.cateringEstimates.map((estimate) => estimate.eventId)).toEqual([
+      'beta',
+    ]);
+    expect(next.riskFindings?.map((finding) => finding.id)).toEqual([
+      'beta-risk',
+    ]);
+    expect(
+      next.rescueProposalSnapshots?.map((snapshot) => snapshot.proposalId),
+    ).toEqual(['beta-proposal']);
+    expect(workspace.events).toHaveLength(2);
+    expect(workspace.tasks).toHaveLength(2);
+  });
+
+  it('ignores deletion of an event that does not exist', () => {
+    const workspace = makeWorkspace({
+      events: [makeEvent({ id: 'existing' })],
+    });
+
+    expect(
+      workspaceReducer(workspace, { type: 'event/deleted', eventId: 'missing' }),
+    ).toBe(workspace);
   });
 
   it('toggles only the requested task and leaves the original workspace intact', () => {

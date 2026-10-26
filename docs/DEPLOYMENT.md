@@ -1,10 +1,39 @@
 # UTSAV AI — Deployment Guide
 
-**Status:** deployment configuration is prepared and verified locally. **No deployment has been performed, and no public URL exists.** This guide describes how to deploy the prepared repository; it is not evidence that a hosted instance is running.
+**Status:** a **public static demo is live** at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. The optional single-service Node API is prepared and verified locally but **is not deployed**. This guide records the live static deployment first, then the prepared Node/Render alternative.
 
-The recommended target is **one Render Web Service** running Node.js 24. That service serves the built React application and the optional same-origin AI API. There is no database or separate backend service.
+## Current deployment
 
-## 1. Hosting architecture
+| Item | Value |
+| --- | --- |
+| Host | Qoder Sites |
+| URL | `https://utsav-ai-9evw6i99uw4.qoder.website` |
+| Published content | The production `dist/` build from `npm run build` |
+| Routing | SPA fallback enabled; HTML navigations to deep routes return the app shell with `200` |
+| Access | Public |
+| Backend | None. `/api/ai/*` and `/api/health` are not hosted |
+| Data | Browser `localStorage` per origin; no accounts, server database, or sync |
+| AI | The AI Planner reports **Unavailable**; the deterministic outline remains usable and is labelled **Not AI-generated** |
+
+Verified on 2026-10-26:
+
+- The HTTPS homepage returned `200` with the expected title; `/rescue`, `/budget`, and `/assistant` returned the SPA shell for `Accept: text/html`, and hashed assets returned `200`. A missing asset returned `404`.
+- In a browser, the dashboard rendered the labelled sample workspace, Event Rescue completed a deterministic analysis with findings and a correctly disabled approval when no changes existed, and the AI Planner disabled AI generation while the local outline worked.
+- Marking a task complete persisted across a reload on the hosted origin.
+- After republishing the corrected build, Event Rescue analysis stored a rescue snapshot with a 2,469-character event signature; reloading `/rescue` kept the snapshot and displayed no salvage notice.
+- The only console error observed was the expected `404` for `/api/ai/status`, because the optional API server is not hosted. The UI surfaces this as **Unavailable** and does not fabricate a provider response.
+
+Observed limits:
+
+- `/api` is a reserved platform namespace on this host, so the Node API cannot be reached under its existing same-origin paths. Hosting provider-backed AI requires deploying the Node service described below or porting the proxy to a supported server function.
+- The observed platform response headers did not include a Content-Security-Policy or `X-Frame-Options`. HTTPS is platform-terminated.
+- The host adds a visible Qoder attribution watermark with a hide control.
+- Browser data is scoped to this origin. Changing the address or origin does not migrate an existing workspace.
+- Updates are published from the same project and preserve the public address; source changes require a new build and publication.
+
+## 1. Hosting architecture (prepared Node/Render alternative)
+
+The alternative target is **one Render Web Service** running Node.js 24. That service serves the built React application and the optional same-origin AI API. There is no database or separate backend service.
 
 ### Selected architecture
 
@@ -98,7 +127,7 @@ If `SERVE_STATIC=true` is set but `dist/index.html` is missing, the server exits
 
 ## 4. Frontend deployment instructions
 
-The frontend is not deployed separately. It is built in the same Render service that runs the API.
+In the prepared Render topology, the frontend is not deployed separately. It is built in the same Render service that runs the API. (The live static demo is a separate Qoder Sites publication described in [Current deployment](#current-deployment), not a Render service.)
 
 ### Option A — Blueprint
 
@@ -280,16 +309,19 @@ Confirm the build step completed and the service restarted. Hashed assets are im
 
 ## 10. Known deployment limitations
 
-- **Not deployed:** no Render service, public URL, DNS record, TLS certificate, or provider call was created or verified during this preparation.
+- **Only the static demo is deployed:** the public Qoder Sites deployment serves the built SPA. The Render/Node service, `/api` routes, and provider proxy have not been deployed, and no provider call was made.
+- **No Node API on the static host:** `/api/ai/status` returns the platform's `404` and the AI Planner reports **Unavailable**. The deterministic outline remains available.
 - **Browser-only persistence:** no database, accounts, multi-user isolation, cloud backup, or cross-device sync. Clearing storage can delete data.
-- **Public AI risk:** if a provider key is configured, the unauthenticated `/api/ai/plan` endpoint can be called by anyone who can reach the service. Rate limiting is in-memory and not a billing guarantee. Use a restricted key and provider spending cap, or leave AI unconfigured for public demonstrations.
-- **No Content-Security-Policy:** the app and server do not configure a CSP. This remains a known security gap.
+- **Public AI risk (prepared Node service):** if a provider key is configured, the unauthenticated `/api/ai/plan` endpoint can be called by anyone who can reach the service. Rate limiting is in-memory and not a billing guarantee. Use a restricted key and provider spending cap, or leave AI unconfigured for public demonstrations.
+- **No Content-Security-Policy:** neither the prepared app and server nor the observed static hosts configure a CSP. This remains a known security gap.
+- **No `X-Frame-Options` on the live static site:** the prepared Node server sends it, but the observed static responses omit it. The site cannot be embedded protection-verified there.
 - **No authentication or authorization:** anyone with the URL can use the app; all planning data is still local to their browser.
-- **Single-instance assumption:** the in-process rate limiter and provider behavior assume one Node process. Horizontal scaling is not prepared.
-- **Static server scope:** the Node static handler supports the Vite output and SPA fallback; it is not a general-purpose CDN and does not add compression or edge caching. Render's platform may provide some of those capabilities, but they were not verified here.
-- **Cold starts:** free hosting can sleep, adding latency before the first request.
+- **Single-instance assumption (Node):** the in-process rate limiter and provider behavior assume one Node process. Horizontal scaling is not prepared.
+- **Static server scope:** the Node static handler supports the Vite output and SPA fallback; it is not a general-purpose CDN and does not add compression or edge caching. Platform behavior was not independently verified beyond the checks recorded above.
+- **Cold starts (Node/Render):** free hosting can sleep, adding latency before the first request.
+- **Third-party watermark:** the static host displays a "Made with Qoder" control in the corner with its own hide option.
 - **No deployment CI or hosted E2E:** the GitHub Actions workflow runs type checking, linting, tests, and the build, but there is no deployment pipeline, hosted smoke test, or deployment regression suite.
 - **No live provider verification:** mocked tests establish the validation and failure paths, not model quality, latency, cost, or provider terms.
-- **No license implied:** deployment does not change the repository's lack of a license. See the root README.
+- **License:** the repository is MIT-licensed; deployment does not change that. See the root README.
 
 For local setup and test commands, see [SETUP.md](SETUP.md). For architecture and trust boundaries, see [ARCHITECTURE.md](ARCHITECTURE.md). For feature status, see [FEATURE_STATUS.md](FEATURE_STATUS.md).

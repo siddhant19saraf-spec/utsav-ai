@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Header } from './Header';
+import { PageLoading } from './PageLoading';
+import { PersistenceNotice } from './PersistenceNotice';
 import { Sidebar } from './Sidebar';
 import {
   navigationSections,
@@ -118,7 +120,10 @@ export function AppLayout() {
           className="min-w-0 flex-1 focus:outline-none"
         >
           <div className="mx-auto w-full max-w-[86rem] px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
-            <Outlet />
+            <PersistenceNotice />
+            <Suspense fallback={<PageLoading />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
 

@@ -10,7 +10,7 @@ UTSAV AI is a **local-first, single-user React application** with an **optional,
 2. **Saved state changes only through validated, explicit actions.** Event Rescue and AI proposals are review-first. Approval revalidates the current saved record, persists before the UI adopts the new state, and rejects stale, duplicate, invalid, or infeasible proposals.
 3. **Every external boundary is treated as untrusted.** Forms, local storage, imports, HTTP requests, HTTP responses, and provider output are parsed as unknown and validated before use. URL query parameters are treated as selections and resolved only against existing workspace records.
 
-There is no account system, server-side data store, database, job queue, background worker, or multi-user synchronization. The prepared production topology is one stateless Node service that serves the static SPA and `/api` from the same origin; no deployment has been performed.
+There is no account system, server-side data store, database, job queue, background worker, or multi-user synchronization. The public deployment is a **static SPA build** on Qoder Sites; it serves no `/api` routes, so the AI Planner reports **Unavailable**. The prepared Node topology — one stateless service serving the static SPA and `/api` from the same origin — is implemented and verified locally but not deployed.
 
 ## System context
 
@@ -42,7 +42,11 @@ flowchart LR
 
 Core planning does not require the right-hand side of the diagram. When the Node server or provider is unavailable, the browser application remains operational and the deterministic outline remains available. In development, Vite serves the SPA and proxies `/api`; in the prepared production mode, the Node server serves both from one origin. There is no CORS grant because cross-origin access is not part of the architecture.
 
-## Production topology (prepared, not deployed)
+## Deployment topology
+
+The public deployment is a **static SPA build** served from Qoder Sites at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. It serves `dist/` with platform-managed HTTPS and SPA fallback for browser navigations. It does not run Node, so `/api/*` requests return the platform's 404 and the AI Planner shows **Unavailable**.
+
+The following single-service Node topology is **prepared and verified locally, not deployed**:
 
 ```mermaid
 flowchart LR
@@ -68,14 +72,14 @@ The production entry point uses the same Node process for three responsibilities
 | `SERVE_STATIC` | Exactly `true` or `false`; enables static SPA serving |
 | `STATIC_DIR` | Static directory, default `dist` |
 
-The prepared Render Blueprint (`render.yaml`) uses one web service with `npm ci --include=dev && npm run build`, `npm start`, and health check `/api/health`. The explicit `--include=dev` is required because the production environment makes npm omit build-time dev dependencies by default. The service is stateless, so the in-memory rate limiter is not shared across instances and the prepared configuration assumes one instance. See [DEPLOYMENT.md](DEPLOYMENT.md) for the full platform procedure and smoke tests. This topology has been exercised only locally; no platform deployment exists.
+The prepared Render Blueprint (`render.yaml`) uses one web service with `npm ci --include=dev && npm run build`, `npm start`, and health check `/api/health`. The explicit `--include=dev` is required because the production environment makes npm omit build-time dev dependencies by default. The service is stateless, so the in-memory rate limiter is not shared across instances and the prepared configuration assumes one instance. See [DEPLOYMENT.md](DEPLOYMENT.md) for the full platform procedure and smoke tests. This topology has been exercised only locally; the live deployment is the separate static build.
 
 ## Module responsibilities
 
 | Location | Owns | Must not own |
 | --- | --- | --- |
-| `src/app/` | Application entry, React Router routes, global Tailwind styles | Feature business rules |
-| `src/components/` | Small reusable presentation components, app shell, navigation | Domain calculations or persistence |
+| `src/app/` | Application entry, React Router routes and lazy page mapping, top-level render error boundary, global Tailwind styles | Feature business rules |
+| `src/components/` | Small reusable presentation components, app shell, navigation, route-loading fallback | Domain calculations or persistence |
 | `src/features/workspace/` | Workspace context, reducer, guarded local storage, sample data, mutation wiring, approvals at the boundary | Feature-specific rules already owned elsewhere |
 | `src/features/events/` | Event forms, validation, filters, pure create/update mutations, event UI | Budget arithmetic |
 | `src/features/budget/` | Budget contracts, calculations, validation, mutations, form parsing, deterministic repair, planner UI | AI arithmetic, persistence |
@@ -341,6 +345,8 @@ The server has no database, no session state, no user accounts, no planning-data
 
 | Area | Failure | Behavior |
 | --- | --- | --- |
+| Route render or chunk load | A feature page throws or its JavaScript chunk cannot load | The top-level boundary replaces the app with a safe recovery screen, focuses its heading, exposes no raw error text, and offers retry and reload |
+| Initial route load | Feature chunk is slow | The app shell and navigation stay visible while an accessible loading card reports progress; client-side transitions keep the previous page visible until the next route resolves |
 | Storage load | Empty | Seed labelled sample workspace |
 | Storage load | Invalid whole payload | Do not overwrite immediately; attempt a recovery copy; show sample data with a safe status message |
 | Storage load | Partial payload | Keep valid records; report skipped records and recovery state |
@@ -376,7 +382,7 @@ The server log records only safe request metadata: route, method, status, durati
 - Request size, array size, message length, token, and timeout limits.
 - One bounded provider attempt, no retry loop.
 - Per-client fixed-window rate limiting; JSON-only POST endpoints.
-- `Cache-Control: no-store` on API and error responses, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, request IDs, and no CORS grant.
+- `Cache-Control: no-store` on API and error responses, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` on API and static responses, request IDs, and no CORS grant.
 - Static path-traversal, dotfile, and dot-segment rejection; API routes take precedence over static fallback; missing assets return 404 rather than HTML.
 - Health endpoint that reveals only `{status: "ok"}` and no configuration.
 - Approval revalidation, stale/duplicate rejection, persist-before-dispatch, and atomic local writes.
@@ -385,11 +391,12 @@ The server log records only safe request metadata: route, method, status, durati
 ### Gaps and limitations
 
 - **No Content-Security-Policy is configured** in the page or server headers. This is a known gap, not an implemented feature.
-- No authentication, authorization, encryption at rest, or multi-user isolation. A public URL is usable by anyone who has it, in their own browser.
-- No TLS termination in the application. The prepared deployment relies on platform-managed HTTPS, which has not been verified because no deployment occurred.
+- No authentication, authorization, encryption at rest, or multi-user isolation. The public static URL is usable by anyone who has it, in their own browser.
+- The live static deployment terminates HTTPS at the platform. The Node server has no TLS termination of its own and is not deployed; do not expose the raw Node process publicly without TLS.
+- The live static responses were observed without a Content-Security-Policy or `X-Frame-Options`; the prepared Node server sends the latter but neither is a substitute for a CSP.
 - The rate limiter is in-memory, per process, and not durable; it is not shared across instances.
 - Tests cover validation and approval paths but do not constitute a security audit or penetration test.
-- No hosted environment exists to verify deployment headers, network policies, or monitoring. Local production-mode checks do not prove platform behavior.
+- The static host was checked for the recorded smoke paths only. The prepared Node topology has no hosted environment, so its headers, network policies, and monitoring are unverified at a platform level.
 - Risk and rescue results depend on saved planning assumptions; they are not legal, financial, or vendor advice.
 
 ## Testing architecture
@@ -398,7 +405,7 @@ The server log records only safe request metadata: route, method, status, durati
 - Pure calculations and rules are tested without React. UI flows use Testing Library and `user-event`.
 - Server tests live in `server/` and are type-checked under `tsconfig.node.json`. They use mocked providers or ephemeral local server paths, not real credentials or paid calls.
 - Static-serving and composition tests create temporary fixture directories and exercise SPA fallback, nested routes, assets, HEAD, traversal/dotfile rejection, API-versus-static routing, and static-root validation without network access.
-- The suite covers validation, persistence migration/salvage, cross-event isolation, budget and rescue constraints, risk reconciliation, stale/duplicate approvals, AI contracts, privacy isolation, provider failures, rate limits, health, static serving, and key UI flows.
+- The suite covers validation, persistence migration/salvage, cross-event isolation, budget and rescue constraints, risk reconciliation, stale/duplicate approvals, AI contracts, privacy isolation, provider failures, rate limits, health, static serving, app-shell route loading and error recovery, and key UI flows.
 - There is no committed browser E2E suite, no real-provider integration test, and no platform deployment test. The GitHub Actions workflow runs type checking, linting, tests, and the build only. See the root README for the exact latest test counts and build results.
 
 ## Deliberate design decisions and constraints
@@ -408,7 +415,7 @@ The server log records only safe request metadata: route, method, status, durati
 - **Advisory AI**, because financial and feasibility decisions must be deterministic and reviewable.
 - **No automatic conflict resolution** for timeline overlaps; overlaps may be intentional and require human judgment.
 - **Proposal snapshots rather than a second event copy**, so stale-proposal detection does not create an alternative source of truth.
-- **Events cannot be deleted yet**, so there is no accidental destructive path without a designed recovery story.
+- **Confirmed cascade deletion for events**, because removing an event must not leave orphaned tasks, guests, activities, estimates, findings, or proposal snapshots. Deletion is explicit, shows the records that will be removed, and points to export for backup instead of adding an undo system to a localStorage prototype.
 - **Local storage rather than a server-side data store**, so the prototype runs without a database or accounts; the trade-off is no sync, no multi-device persistence, and manual export for backup. A stateless server may be deployed for static hosting and the optional AI proxy, but it does not change data locality.
 - **One origin in production**, so the existing relative `/api` calls and no-CORS design remain valid without a serverless adapter or a second service.
 

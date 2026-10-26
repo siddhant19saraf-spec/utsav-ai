@@ -72,7 +72,7 @@ Tests live next to the code they cover and run in Vitest with jsdom. Use the sha
 4. Complete the pull request template, including the verification results.
 5. Do not force-push or rewrite shared history, and do not commit build output, coverage, `node_modules`, or large media.
 
-Deployment is prepared but not performed. Do not add a public URL, TLS, hosting, or post-deploy claim without verifiable results. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+A public static demo is live (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)); the Node/API service is prepared but not deployed. Do not add a new public URL, TLS, hosting, or post-deploy claim without verifiable results.
 
 ## Questions
 

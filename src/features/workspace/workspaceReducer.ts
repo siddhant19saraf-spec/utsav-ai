@@ -22,6 +22,7 @@ import {
 export type WorkspaceAction =
   | { readonly type: 'event/created'; readonly event: Workspace['events'][number] }
   | { readonly type: 'event/updated'; readonly event: Workspace['events'][number] }
+  | { readonly type: 'event/deleted'; readonly eventId: string }
   | { readonly type: 'task/toggled'; readonly taskId: string; readonly status: TaskStatus; readonly updatedAt: string }
   | { readonly type: 'task/created'; readonly task: PlanningTask }
   | { readonly type: 'task/updated'; readonly task: PlanningTask }
@@ -123,6 +124,38 @@ export function workspaceReducer(workspace: Workspace, action: WorkspaceAction):
       });
 
       return found ? { ...workspace, events } : workspace;
+    }
+
+    case 'event/deleted': {
+      if (!workspace.events.some((event) => event.id === action.eventId)) {
+        return workspace;
+      }
+
+      return {
+        events: workspace.events.filter((event) => event.id !== action.eventId),
+        tasks: workspace.tasks.filter((task) => task.eventId !== action.eventId),
+        guests: workspace.guests.filter((guest) => guest.eventId !== action.eventId),
+        activities: workspace.activities.filter(
+          (activity) => activity.eventId !== action.eventId,
+        ),
+        cateringEstimates: workspace.cateringEstimates.filter(
+          (estimate) => estimate.eventId !== action.eventId,
+        ),
+        ...(workspace.riskFindings
+          ? {
+              riskFindings: workspace.riskFindings.filter(
+                (finding) => finding.eventId !== action.eventId,
+              ),
+            }
+          : {}),
+        ...(workspace.rescueProposalSnapshots
+          ? {
+              rescueProposalSnapshots: workspace.rescueProposalSnapshots.filter(
+                (snapshot) => snapshot.eventId !== action.eventId,
+              ),
+            }
+          : {}),
+      };
     }
 
     case 'task/toggled': {

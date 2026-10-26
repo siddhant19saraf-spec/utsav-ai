@@ -11,6 +11,7 @@ import {
   Pencil,
   ShieldAlert,
   Sparkles,
+  Trash2,
   Users,
   Wallet,
   type LucideIcon,
@@ -46,6 +47,7 @@ interface EventCardProps {
   readonly selected?: boolean;
   readonly onSelect?: (eventId: string) => void;
   readonly onEdit?: (eventId: string) => void;
+  readonly onDelete?: (eventId: string) => void;
   readonly riskSummary?: EventRiskSummary | undefined;
 }
 
@@ -54,6 +56,7 @@ export function EventCard({
   selected = false,
   onSelect,
   onEdit,
+  onDelete,
   riskSummary,
 }: EventCardProps) {
   const CategoryIcon = categoryIcons[event.category];
@@ -153,7 +156,7 @@ export function EventCard({
         </Link>
       ) : null}
 
-      {onSelect || onEdit ? (
+      {onSelect || onEdit || onDelete ? (
         <div className="mt-auto flex flex-col gap-2 pt-5">
           {onEdit ? (
             <button
@@ -165,6 +168,19 @@ export function EventCard({
             >
               <Pencil className="size-4" aria-hidden="true" />
               Edit event
+            </button>
+          ) : null}
+
+          {onDelete ? (
+            <button
+              type="button"
+              onClick={() => onDelete(event.id)}
+              aria-haspopup="dialog"
+              aria-label={`Delete ${event.name}`}
+              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-rust-700 transition-colors duration-150 hover:bg-rust-50"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete event
             </button>
           ) : null}
 

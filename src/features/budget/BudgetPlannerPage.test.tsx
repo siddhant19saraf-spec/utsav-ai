@@ -76,7 +76,7 @@ function renderPlanner(entry: string, workspace: Workspace = createWorkspace()) 
 }
 
 function getCategoryRow(name: string): HTMLElement {
-  const heading = screen.getByRole('heading', { level: 4, name });
+  const heading = screen.getByRole('heading', { level: 3, name });
   const row = heading.closest('li');
 
   if (!row) {
@@ -102,14 +102,14 @@ describe('BudgetPlannerPage', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Birthday' })).toBeInTheDocument();
     expect(getCategoryRow('Cake')).toHaveTextContent('₹500');
-    expect(screen.queryByRole('heading', { level: 4, name: 'Venue' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3, name: 'Venue' })).not.toBeInTheDocument();
     expect(screen.getByText('No repair needed')).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Event to edit'), 'wedding');
 
     expect(getCategoryRow('Venue')).toHaveTextContent('₹6,000');
     expect(getCategoryRow('Décor')).toHaveTextContent('₹3,000');
-    expect(screen.queryByRole('heading', { level: 4, name: 'Cake' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3, name: 'Cake' })).not.toBeInTheDocument();
   });
 
   it('validates an empty category form and adds the category to the selected event', async () => {
@@ -171,14 +171,14 @@ describe('BudgetPlannerPage', () => {
     const confirmation = screen.getByRole('group', { name: 'Confirm removal of Cake' });
 
     expect(
-      screen.getByRole('heading', { level: 4, name: 'Cake' }),
+      screen.getByRole('heading', { level: 3, name: 'Cake' }),
     ).toBeInTheDocument();
 
     await user.click(
       within(confirmation).getByRole('button', { name: 'Remove category' }),
     );
 
-    expect(screen.queryByRole('heading', { level: 4, name: 'Cake' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3, name: 'Cake' })).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'No expense categories yet' }),
     ).toBeInTheDocument();
@@ -330,7 +330,7 @@ describe('BudgetPlannerPage', () => {
       /disabled.*reserve allocation was removed/i,
     );
     expect(
-      screen.queryByRole('heading', { level: 4, name: 'Emergency reserve' }),
+      screen.queryByRole('heading', { level: 3, name: 'Emergency reserve' }),
     ).not.toBeInTheDocument();
     expect(getCategoryRow('Cake')).toHaveTextContent('₹500');
   });

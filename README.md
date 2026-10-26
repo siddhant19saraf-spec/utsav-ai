@@ -14,10 +14,11 @@ Built for **PromptWars Virtual — Challenge 5** · Category: **Intelligent cele
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
 
-> **Project status:** local-first hackathon prototype, **prepared for deployment but not deployed**. Core planning works entirely in the browser. AI suggestions are optional, advisory, and require a running API server plus your own provider credentials. Deployment configuration for a single same-origin Node web service is included, but **no public URL, hosted demo, account system, or cloud sync exists**. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+> **Project status:** local-first hackathon prototype with a **live public static demo** at **[utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. Core planning works entirely in the browser. The hosted build serves the same SPA and browser-local workspace, but it does **not** host the optional Node AI proxy: the AI Planner reports **Unavailable** and the deterministic, clearly labelled local outline remains available. There is no account system, server database, or cloud sync. A single-service Node/Render configuration remains prepared but is not deployed. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 <div align="center">
   <a href="docs/screenshots/dashboard.png">
@@ -30,6 +31,7 @@ Built for **PromptWars Virtual — Challenge 5** · Category: **Intelligent cele
 ## Contents
 
 - [Project overview](#project-overview)
+- [Challenge alignment, persona, and assumptions](#challenge-alignment-persona-and-assumptions)
 - [Screenshots](#screenshots)
 - [Key features](#key-features)
 - [Implementation status](#implementation-status)
@@ -63,6 +65,25 @@ The central design decision is that **deterministic code owns every fact that ma
 
 UTSAV AI is designed for the moment a plan stops fitting: the budget is reduced, the guest count grows, the date moves, or a venue assumption changes. Instead of only warning about the problem, Event Rescue shows the evidence, computes a constrained repair, compares the original and proposed plans, and waits for the user to approve or reject it.
 
+## Challenge alignment, persona, and assumptions
+
+**Recorded challenge context:** Hack2Skill Virtual Challenge 5 — AI Code Submission. The repository records the project category as **Intelligent celebration planning and event management**; earlier project documents also name the brief **PromptWars Virtual — Challenge 5**. The official external challenge statement is not stored in this repository, so the notes below describe the implemented alignment rather than quoting unavailable requirements.
+
+**Primary persona:** an individual organizer planning a significant personal or community celebration — for example, a couple or family planning a wedding, a parent planning a milestone birthday, or a volunteer coordinating a festival or community gathering. They are budget-conscious, work with a fixed date and expected guest count, and may not have dedicated planning software or a procurement team.
+
+**Problem and significance:** plans live across notes, spreadsheets, chats, and memory. When the budget, guest count, date, or venue assumptions change, the organizer must manually recompute every dependent amount. Ordinary checklists warn that something is wrong but do not enforce protected commitments, produce a bounded corrective allocation, or keep the original plan intact until the user approves a change. A missed constraint can cause overspending, incomplete preparation, or an accidental cut to a non-negotiable item, so the product prioritizes deterministic arithmetic, explicit assumptions, and review-first changes.
+
+**Assumptions and constraints:**
+
+- Money is recorded and calculated as integer INR paise; display formatting is not fed back into arithmetic.
+- Budget totals, category amounts, protections, and minimums are user planning assumptions, not vendor contracts.
+- Catering uses the user's per-person assumption and confirmed RSVPs or the expected count; it is an estimate, not a quote.
+- No vendor, weather, calendar, payment, invitation, or booking integration exists, so live prices and availability are never asserted.
+- The workspace is single-user and browser-local; there is no account, server database, or cloud sync.
+- Event Rescue produces one deterministic proposal per analysis. The repair is greedy and is not claimed to be mathematically optimal; multiple ranked alternatives are not implemented.
+- AI is optional and advisory. It cannot change budgets, guest records, protected priorities, feasibility, risk severity, or its own approval state.
+- All sample records are fictional and labelled as sample data.
+
 ## Screenshots
 
 These captures come from the running application at a 1440 px desktop viewport using the labelled sample workspace. All values are fictitious sample data. No AI provider was configured, so the AI Planner is shown in its real **Unavailable** state rather than a fabricated plan.
@@ -88,9 +109,9 @@ Additional captures, including the Event Rescue request form, are in [docs/scree
 
 ### Event workspace and planning context
 
-Create and edit events with client-side validation, search and filter the event list, and keep tasks, guests, timeline activities, catering estimates, budgets, and risk findings isolated per event. Events carry a category, date, venue, expected guest count, total budget, planning status, optional setting and theme, accessibility answers, and outdoor-contingency confirmation.
+Create, edit, and delete events with client-side validation, search and filter the event list, and keep tasks, guests, timeline activities, catering estimates, budgets, and risk findings isolated per event. Events carry a category, date, venue, expected guest count, total budget, planning status, optional setting and theme, accessibility answers, and outdoor-contingency confirmation.
 
-On a first run, the app loads a clearly labelled sample workspace so every screen can be explored immediately. Sample events can be removed without touching user-created records, and restored later. Event deletion is not implemented.
+On a first run, the app loads a clearly labelled sample workspace so every screen can be explored immediately. Sample events can be removed without touching user-created records, and restored later. Deleting an individual event requires explicit confirmation and removes its budget, tasks, guests, activities, catering assumption, and related risk findings together. There is no undo; Settings can export a backup first.
 
 ### Budget Planner
 
@@ -134,7 +155,7 @@ Statuses are based on source inspection and the test suite available in this rep
 
 | Area | Status | What is true today |
 | --- | --- | --- |
-| Event workspace | **Implemented and verified** | Create, edit, search, filter, sample-data controls, per-event isolation. No delete. |
+| Event workspace | **Implemented and verified** | Create, edit, delete, search, filter, sample-data controls, per-event isolation. |
 | Budget Planner | **Implemented and verified** | Integer-minor-unit totals, categories, protections, minimums, reserve, overrun, deterministic repair with explicit approval. |
 | Event Rescue | **Implemented and verified** | Deterministic findings, constrained proposal, validation, before/after review, stale and duplicate rejection, atomic approval. |
 | Timeline and tasks | **Implemented and verified** | Activity validation, chronological list, overlap review, task priorities, overdue detection, completion progress, confirmed deletion. |
@@ -146,10 +167,12 @@ Statuses are based on source inspection and the test suite available in this rep
 | Sample workspace | **Implemented and verified** | Clearly labelled sample events with remove and restore controls; user records preserved. |
 | AI deterministic outline | **Implemented and verified** | Always available, derived from saved data, labelled **Not AI-generated**, no invented prices or bookings. |
 | AI provider suggestions | **Requires external configuration** | Implemented and covered by automated tests with a mocked provider. A real provider call requires a running API server, a real key, and a compatible model; no live-provider run is verified in this repository. |
-| Production static serving | **Implemented and verified locally** | The Node server can serve the built SPA with `/api` on the same origin, SPA fallback, cache headers, and `/api/health`. Verified against a local production build; no platform deployment was performed. |
-| Deployment configuration | **Prepared, not deployed** | `render.yaml`, `.node-version`, `npm start`, environment documentation, and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) exist. No service has been created and no public URL was tested. |
+| Production static serving | **Implemented and verified locally** | The Node server can serve the built SPA with `/api` on the same origin, SPA fallback, cache headers, and `/api/health`. Verified against a local production build; the Node service itself is not hosted. |
+| Hosted static demo | **Live and verified** | The production `dist/` build is published publicly over HTTPS by Qoder Sites with SPA fallback. Verified: homepage, direct `/rescue`, `/budget`, and `/assistant` loads, asset delivery, Event Rescue analysis, deterministic outline, and browser-local task persistence across reload. The Node `/api` endpoints are not hosted there; the AI Planner shows **Unavailable**, not a fabricated response. |
+| Deployment configuration | **Static demo live; Node/Render prepared** | Qoder Sites publishes the static build. `render.yaml`, `.node-version`, `npm start`, environment documentation, and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) remain available for the optional full Node service with `/api`; no Render service has been created. |
 | Responsive layout and keyboard access | **Implemented but not fully verified** | Responsive layouts and mobile navigation focus behavior are implemented; automated tests cover main navigation and dialogs. Physical devices, all viewport combinations, and screen readers are not exhaustively verified. |
-| Event deletion | **Not implemented** | Events can be created and edited but not deleted. |
+| App shell resilience | **Implemented and verified** | Feature pages load in separate chunks with a shell-preserving, status-announced loading fallback. A top-level error boundary catches render or chunk-load failures, focuses a safe recovery heading, never shows the raw error detail, and offers retry and reload. Evidence: `AppErrorBoundary.test.tsx` (2 tests), `PageLoading.test.tsx` (1 test), `App.test.tsx`; production-browser checks confirmed all routes, a throttled initial load, a forced chunk failure, and reload recovery. |
+| Event deletion | **Implemented and verified** | Explicit confirmation with the affected record counts; removes the event, budget, tasks, guests, activities, catering estimate, risk findings, and rescue-proposal snapshots scoped to that event. Other events are untouched. No undo; export remains the recovery path. |
 | Hosted database, accounts, cloud sync | **Not implemented** | The app is single-user and browser-local; there is no server database or sign-in. |
 | Live vendor prices, bookings, availability, weather | **Not implemented** | No vendor, calendar, payment, or weather integration exists. |
 | Payments | **Not implemented** | Nothing in this repository processes payments. |
@@ -171,6 +194,20 @@ Many planners can display a budget or a checklist. UTSAV AI focuses on the harde
 The intended trust boundary is straightforward: **AI can suggest additions; deterministic code decides what is financially and structurally valid.** Event Rescue never pretends to contact a vendor, check live availability, confirm the weather, or verify a venue's accessibility. It is a planning-data repair tool, not an autonomous event operator.
 
 The differentiator is implemented for the app's saved-data domain. It is not a general-purpose solver, does not claim optimal repairs (the budget repair is deterministic and greedy), and does not cover external facts the app cannot observe.
+
+### Decision engine in practice
+
+| Decision element | Implemented behavior |
+| --- | --- |
+| Inputs | Saved event, integer-paise budget and category protections, guest count and RSVPs, catering assumption, open tasks, activities, and the requested constraint change. |
+| Hard constraints | Non-negative safe integer amounts; protected categories and flexible minimums; total-budget ceiling; valid date and guest limits; unchanged saved-event signature. |
+| Algorithm | Deterministic finding detection and a greedy constrained repair of flexible categories through the shared budget engine. One proposal is generated; no ranking across alternatives and no optimality claim. |
+| Feasibility | Approval is offered only when the proposal reconciles, respects protections and minimums, does not exceed the requested total, and passes deterministic validation. Otherwise the shortfall and unresolved issues are reported. |
+| Explanation | Findings include evidence and constraints; the review shows original versus proposed totals and category changes; remaining issues stay visible after approval. |
+| Approval and persistence | Explicit accept or reject; approval revalidates against the current event, rejects stale and duplicate proposals, persists before state replacement, and leaves records unchanged on failure. |
+| Estimates and unknowns | Catering is a proportional planning assumption. Live vendor prices, availability, weather, and physical accessibility are not observable by the app. |
+
+The full flow, including stale-signature checks and failure behavior, is documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#event-rescue-flow).
 
 ## Technology stack
 
@@ -347,7 +384,20 @@ No real credential, provider body, prompt, or guest data is logged or displayed 
 
 ## Deployment
 
-**Status: prepared for deployment, not deployed.** No hosted service was created, no public URL was tested, and no DNS or platform configuration was applied.
+**Status: a public static demo is live; the optional Node service is prepared but not deployed.**
+
+### Live static deployment
+
+The production `dist/` build is published by **Qoder Sites** at **[utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. It is a static SPA deployment with platform-managed HTTPS and SPA fallback. Verified on 2026-10-26:
+
+- The HTTPS homepage, direct deep links (`/rescue`, `/budget`, `/assistant`), and hashed assets return the expected HTML or asset responses; missing assets return 404.
+- The dashboard renders the labelled sample workspace, Event Rescue completes a deterministic analysis, and the AI Planner shows **Unavailable** while the deterministic outline stays usable and is labelled **Not AI-generated**.
+- Marking a task complete persisted across a browser reload on the hosted origin. The only console error observed was the expected `404` for `/api/ai/status`, because the optional API is not hosted.
+- After the corrected build was republished, Event Rescue analysis saved a proposal snapshot whose stored event signature is 2,469 characters; a full reload kept the snapshot and showed **no** "record could not be read" salvage notice.
+
+This deployment does **not** include the Node server: `/api/ai/*`, `/api/health`, a server database, accounts, and cloud sync are absent. The workspace remains browser `localStorage`, scoped to this origin. The host adds a visible Qoder attribution watermark with a hide control; it is platform presentation, not part of the application. AI generation remains disabled until a server-side provider is deployed and configured.
+
+### Optional Node service (prepared, not deployed)
 
 The included configuration targets a **single same-origin Node web service** (a Render Blueprint is provided in [render.yaml](render.yaml)). The service builds the Vite app, then serves `dist/` and `/api` from one process. This matches the application's actual shape:
 
@@ -370,7 +420,7 @@ Key files and settings:
 
 Set AI provider variables only in the hosting platform's secret environment settings, never in committed files. Without them, the app remains fully usable: the AI status reports **Not configured** and the deterministic outline stays available.
 
-Detailed instructions, smoke tests, troubleshooting, and limitations are in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. The repository does not claim that any step in that guide has already been performed on a hosting platform.
+Detailed instructions, smoke tests, troubleshooting, and limitations are in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. The Render/Node path in that guide has not been performed; the live deployment is the separate static Qoder Sites build described above.
 
 ## Example workflow
 
@@ -388,19 +438,19 @@ A shorter backup path for a live demo is included in [docs/DEMO_SCRIPT.md](docs/
 
 ## Testing and quality
 
-The required verification suite was last run on **2026-10-25** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
+The required verification suite was last run on **2026-10-26** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
 
 | Check | Command | Result |
 | --- | --- | --- |
 | Type check | `npm run typecheck` | **Passed** (`tsc -b`, exit 0) |
 | Lint | `npm run lint` | **Passed**, zero warnings (`--max-warnings=0`) |
-| Automated tests | `npm run test` | **496 tests passed across 47 test files** |
-| Production build | `npm run build` | **Passed**; single JS and CSS bundles emitted |
+| Automated tests | `npm run test` | **512 tests passed across 50 test files** |
+| Production build | `npm run build` | **Passed**; route-split JS chunks and CSS emitted |
 | Dependency audit | `npm audit` | **0 vulnerabilities** reported |
 
-The build emits a Vite warning that the single JavaScript chunk exceeds 500 kB after minification (approximately 835.81 kB JS, 223.61 kB gzip; 53.72 kB CSS, 9.40 kB gzip). This is a bundle-size warning, not a build failure. Code splitting has not been implemented.
+Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 448.69 kB (131.75 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 54.48 kB (9.52 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
 
-What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, and the main UI flows with Testing Library.
+What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, keyboard activation of the rescue analysis, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, lazy-route loading, error-boundary recovery, and the main UI flows with Testing Library.
 
 ### Continuous integration
 
@@ -434,9 +484,9 @@ Limitations of the current verification:
 
 - Provider credentials are read from server environment variables only. They are not read from `VITE_*` values, source, or committed configuration.
 - The server is a stateless provider proxy. It does not log prompts, provider response bodies, keys, guest data, or stack traces to its request log. It does log safe request metadata: route, method, status, duration, and request ID.
-- The server uses one bounded provider attempt with a timeout and output-token cap, a request-body limit, a per-client in-memory fixed-window rate limit, JSON-only API endpoints, `Cache-Control: no-store` on API responses, `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer`. It does not grant CORS access. It binds to loopback by default and must be configured to `0.0.0.0` on a hosting platform.
+- The server uses one bounded provider attempt with a timeout and output-token cap, a request-body limit, a per-client in-memory fixed-window rate limit, JSON-only API endpoints, `Cache-Control: no-store` on API responses, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and `X-Frame-Options: DENY` on API and static responses. It does not grant CORS access. It binds to loopback by default and must be configured to `0.0.0.0` on a hosting platform.
 - The rate limiter is in-memory and resets when the server restarts. It is not shared across instances, so the prepared deployment assumes one instance.
-- The prepared deployment has no application authentication, so anyone with the URL can use the workspace in their own browser and can trigger configured AI requests. A public AI-enabled deployment should add access control or a spending limit before sharing the URL widely. Without provider credentials, no AI request can be made.
+- The live static deployment has no application authentication, so anyone with the URL can use the workspace in their own browser. It hosts no AI proxy, so no AI request can be triggered there. If the Node service is later deployed with provider credentials, add access control or a spending limit before sharing it widely; without credentials, no AI request can be made.
 
 ### Validation and approval
 
@@ -447,40 +497,40 @@ Limitations of the current verification:
 
 ### Known security limitations
 
-- **No Content-Security-Policy (CSP) is configured** in the repository or the server's static/API headers. The app does not claim one.
+- **No Content-Security-Policy (CSP) is configured** in the repository or the server's static/API headers. The app does not claim one, and the observed Qoder Sites response headers did not include a CSP or `X-Frame-Options`.
 - There is no authentication, authorization, multi-user isolation, or encrypted storage because this is a single-user prototype.
-- The API server has no TLS termination of its own. The prepared platform deployment relies on the hosting provider for HTTPS; that was not verified because no deployment occurred. Do not expose the raw Node process publicly without TLS.
+- The live static site is served over platform-managed HTTPS. The Node API server has no TLS termination of its own and is not deployed; do not expose the raw Node process publicly without TLS.
 - Automated tests cover many validation and approval paths but are not a comprehensive security audit or a production penetration test.
-- No hosted environment exists in which to verify deployment headers, network controls, or operational monitoring. Production behavior on a hosting platform is unverified.
+- The live static host was checked for basic HTTPS responses and browser behavior, but its network controls, header policy, and operational monitoring were not independently audited. The Node API boundary is not hosted.
 
 ## Limitations and future improvements
 
 ### Current limitations
 
 - The workspace is limited to one browser profile and one origin; there is no cross-device sync, account, or shared collaboration. A hosted deployment does not change this.
-- Events cannot be deleted, and imports replace rather than merge the workspace.
+- Imports replace rather than merge the workspace.
 - If browser storage is cleared and no export exists, the workspace cannot be recovered by the app or by the server.
 - There is no integration with real vendors, calendars, weather, payments, invitations, or booking systems, so live prices, availability, and confirmations are never verified.
 - Risk findings and rescue proposals depend on the accuracy of saved planning assumptions. They are not financial, legal, or vendor advice.
 - The deterministic budget repair is greedy and deterministic, not mathematically optimal.
 - AI suggestions require external configuration and provider compatibility; the repo's tests use mocked providers, so real-model quality and latency are not evaluated here.
-- The production build is a single large JavaScript chunk; code splitting and bundle optimisation are future work.
+- Route-level code splitting is implemented, but there is no performance budget, field measurement of load times, or automated bundle-size regression check.
 - Mobile navigation and dialogs have automated keyboard tests, but the interface has not been tested on a broad matrix of physical devices or screen readers.
 - The repository includes no committed browser E2E suite or demo video; screenshots are static captures of the running app. CI covers type checking, linting, tests, and the build, but not browser E2E or deployment.
-- Deployment is prepared but not performed. The Render Blueprint and production server were verified only locally, not on the platform.
-- The project has no chosen license yet (see below).
+- The public deployment is static only. The Render Blueprint and Node production server were verified only locally; `/api`, server-side AI, and `/api/health` are not hosted, and the live site remains browser-local with no accounts or sync.
 
 ### Planned improvements
 
+No feature is currently in progress. The implementation-status table above is the verified, implemented scope; the items below are planned and not implemented. They are not commitments or dates.
+
 These are **not implemented** and should not be read as commitments or current behavior:
 
-- Event deletion with confirmation and a recoverable path.
 - Optional hosted backend, accounts, and explicit multi-device sync with a clear migration story.
 - More Event Rescue scenarios, including configurable repair strategies and scenario comparison.
 - Calendar export, invitation workflows, and integration adapters for real vendor availability where an authoritative source exists.
 - Further accessibility validation with screen readers and physical devices.
-- Bundle code splitting and a committed browser E2E suite.
-- A platform deployment with verified HTTPS, headers, and post-deploy smoke tests, if the owner authorizes it.
+- A committed browser E2E suite and automated performance and accessibility regression checks.
+- A Node/API deployment of the optional provider proxy with verified HTTPS, headers, and post-deploy smoke tests, if the owner authorizes it and supplies credentials.
 - A governance and licensing decision suitable for public reuse.
 
 ## Documentation
@@ -489,7 +539,7 @@ These are **not implemented** and should not be read as commitments or current b
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — module responsibilities, data model, persistence flow, budget and risk engines, Event Rescue approval, AI validation, error handling, and security boundaries.
 - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — a realistic three-to-four-minute competition demo script with exact sample values, expected results, a backup path, privacy warnings, and a recording checklist.
 - [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md) — detailed per-feature status, evidence, scope, and known gaps.
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — prepared single-service hosting architecture, environment variables, local production verification, smoke tests, troubleshooting, and deployment limitations. No deployment has been performed.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — the live static Qoder Sites deployment, its verified checks and limits, the prepared single-service Node/Render alternative, environment variables, smoke tests, and troubleshooting.
 - [CHANGELOG.md](CHANGELOG.md) — notable changes, the current source snapshot, and known limitations.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — development setup, deterministic and privacy boundaries, required checks, and pull request expectations.
 - [SECURITY.md](SECURITY.md) — private vulnerability reporting, supported source, scope, and security-relevant design notes.
@@ -499,6 +549,6 @@ For the engineering conventions used in this repository, see [AGENTS.md](AGENTS.
 
 ## License
 
-**No license is specified for this project yet.** There is no `LICENSE` file in the repository, and `package.json` is marked `"private": true`. The source is publicly visible, but absence of a license means others do not receive explicit permission to copy, modify, or redistribute the code. The owner must choose a license and add the corresponding `LICENSE` file before the project can be described as open source. No license is implied by this README.
+[MIT](LICENSE) — Copyright (c) 2026 Siddhant Ravindra Saraf. The project is open source under the MIT License; anyone may use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies with attribution.
 
 Third-party dependencies remain under their own licenses.
