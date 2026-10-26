@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino,
     Georgia, serif;
@@ -22,6 +24,8 @@
   --color-maroon-700: #5c1a2e;
   --color-maroon-600: #76233c;
   --color-maroon-500: #933a52;
+  --color-maroon-300: #d3a5b5;
+  --color-maroon-200: #e6cbd5;
   --color-maroon-100: #f4e4e8;
   --color-maroon-50: #faf0f2;
 
@@ -39,6 +43,8 @@
   --color-sage-100: #e5f0eb;
   --color-sage-50: #f1f7f4;
 
+  --color-rust-900: #83331f;
+  --color-rust-800: #973a24;
   --color-rust-700: #973a24;
   --color-rust-600: #ac4a30;
   --color-rust-100: #f9e6df;
@@ -51,6 +57,62 @@
   --shadow-card: 0 1px 2px rgb(41 22 29 / 0.04), 0 18px 40px -32px rgb(41 22 29 / 0.3);
   --shadow-lift: 0 2px 4px rgb(41 22 29 / 0.05), 0 24px 48px -28px rgb(41 22 29 / 0.32);
   --radius-4xl: 2rem;
+
+  /* The navigation rail is permanently dark, so its text colors must not
+     follow the light/dark theme. */
+  --color-nav-strong: #fbf5ea;
+  --color-nav-text: #f8ecd8;
+  --color-nav-muted: #f0d6a8;
+  --color-nav-accent: #e8be78;
+}
+
+/*
+ * Dark palette. Canvas-level tokens invert; badge and panel tints (50/100)
+ * darken so light text stays readable; mid-tone tokens (500–700) lighten
+ * because they are used as text and accents on surfaces. Tokens that carry
+ * white text (maroon-800/900, rust-800/900) keep their light-theme values.
+ */
+html.dark {
+  --color-canvas: #1a1216;
+  --color-canvas-deep: #130d10;
+  --color-surface: #251a20;
+  --color-surface-muted: #1f141a;
+  --color-ink: #f4eae6;
+  --color-ink-muted: #b4a2a9;
+  --color-ink-soft: #9d8a91;
+  --color-line: #3c2b32;
+  --color-line-strong: #51404a;
+
+  --color-maroon-500: #9d5568;
+  --color-maroon-600: #ad6880;
+  --color-maroon-700: #c78ba0;
+  --color-maroon-100: #3a2129;
+  --color-maroon-50: #2e1a21;
+
+  --color-gold-700: #dfa955;
+  --color-gold-600: #d69f3f;
+  --color-gold-500: #caa244;
+  --color-gold-400: #dfb25f;
+  --color-gold-200: #4a3823;
+  --color-gold-100: #332718;
+  --color-gold-50: #2b2117;
+
+  --color-sage-700: #7fb8a4;
+  --color-sage-600: #4f9c85;
+  --color-sage-100: #22332c;
+  --color-sage-50: #1c2b25;
+
+  --color-rust-700: #e0785a;
+  --color-rust-600: #d9876a;
+  --color-rust-100: #3d231a;
+  --color-rust-50: #331c14;
+
+  --color-slate-blue-700: #8fa9bd;
+  --color-slate-blue-100: #26313b;
+  --color-slate-blue-50: #1f2830;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 40px -32px rgb(0 0 0 / 0.55);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.32), 0 24px 48px -28px rgb(0 0 0 / 0.6);
 }
 
 @layer base {
@@ -80,6 +142,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color-scheme: light;
+  }
+
+  html.dark body {
+    background-image:
+      radial-gradient(48rem 30rem at 4% -10%, rgb(200 138 42 / 0.16), transparent 65%),
+      radial-gradient(42rem 28rem at 100% 0%, rgb(118 35 60 / 0.24), transparent 70%);
+    color-scheme: dark;
   }
 
   h1,
@@ -125,15 +194,15 @@
   }
 
   .btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-150 hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-150 hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-maroon-200;
   }
 
   .btn-ghost {
-    @apply inline-flex min-h-9 items-center justify-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-ink-muted transition-colors duration-150 hover:bg-maroon-50 hover:text-maroon-800 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-9 items-center justify-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold text-ink-muted transition-colors duration-150 hover:bg-maroon-50 hover:text-maroon-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-maroon-200;
   }
 
   .btn-icon {
-    @apply inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted transition-colors duration-150 hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800;
+    @apply inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted transition-colors duration-150 hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800 dark:hover:text-maroon-200;
   }
 
   .field-label {

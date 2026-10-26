@@ -344,7 +344,7 @@ export function DashboardPage() {
             >
               Some risk checks could not run, so findings may be incomplete. Your saved
               records were not changed.{' '}
-              <Link to={risksHref} className="font-semibold text-maroon-700 hover:text-maroon-900">
+              <Link to={risksHref} className="font-semibold text-maroon-700 hover:text-maroon-900 dark:hover:text-maroon-100">
                 See details in Risk Intelligence
               </Link>
               .
@@ -659,7 +659,7 @@ export function DashboardPage() {
                           {event ? (
                             <Link
                               to={`/timeline?event=${event.id}`}
-                              className="mt-1 inline-flex text-xs font-semibold text-maroon-700 hover:text-maroon-900"
+                              className="mt-1 inline-flex text-xs font-semibold text-maroon-700 hover:text-maroon-900 dark:hover:text-maroon-100"
                             >
                               {event.name}
                             </Link>
@@ -799,7 +799,7 @@ export function DashboardPage() {
               </p>
               <Link
                 to={timelineHref}
-                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-maroon-700 hover:text-maroon-900"
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-maroon-700 hover:text-maroon-900 dark:hover:text-maroon-100"
               >
                 <ListTodo className="size-3.5" aria-hidden="true" />
                 Manage tasks and schedule

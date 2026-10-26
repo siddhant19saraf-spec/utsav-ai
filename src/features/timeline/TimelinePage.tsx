@@ -460,7 +460,7 @@ function ActivityManager({
                         <button
                           type="button"
                           onClick={() => handleDelete(activity)}
-                          className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-rust-700 px-3 py-1 text-xs font-semibold text-white hover:bg-rust-600"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-rust-800 px-3 py-1 text-xs font-semibold text-white hover:bg-rust-900"
                         >
                           <Trash2 className="size-3.5" aria-hidden="true" />
                           Confirm delete

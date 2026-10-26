@@ -205,7 +205,7 @@ Import is a replace operation, not a merge. The app validates the whole file, sh
 | `npm run preview` | Serve the built client with Vite's preview server |
 | `npm start` | Run the Node server (API only unless `SERVE_STATIC=true`) |
 
-Verification results as of 2026-10-26: typecheck passed, lint passed with zero warnings, 512 tests passed across 50 files, and the production build passed. `npm audit` reported 0 vulnerabilities. The tests use mocked AI providers and require no real key, network access to a model, or paid request.
+Verification results as of 2026-10-26: typecheck passed, lint passed with zero warnings, 529 tests passed across 52 files, and the production build passed. `npm audit` reported 0 vulnerabilities. The tests use mocked AI providers and require no real key, network access to a model, or paid request.
 
 ## 7. Troubleshooting
 

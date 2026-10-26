@@ -27,7 +27,7 @@ function MobileNavigationLink({
       className={({ isActive }) =>
         `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-maroon-50 text-maroon-800'
+            ? 'bg-maroon-50 text-maroon-800 dark:text-maroon-200'
             : 'text-ink-muted hover:bg-surface-muted hover:text-ink'
         }`
       }

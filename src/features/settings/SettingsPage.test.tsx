@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { rupees } from '@/lib/money';
+import { THEME_STORAGE_KEY } from '@/lib/theme';
 import type { Workspace } from '@/types/domain';
+import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { exportWorkspaceToJson } from '@/features/workspace/workspaceStorage';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
@@ -71,10 +73,12 @@ function WorkspaceProbe() {
 function renderSettings(initialState: Workspace = currentWorkspace()) {
   return render(
     <MemoryRouter>
-      <WorkspaceProvider initialState={initialState}>
-        <SettingsPage />
-        <WorkspaceProbe />
-      </WorkspaceProvider>
+      <ThemeProvider>
+        <WorkspaceProvider initialState={initialState}>
+          <SettingsPage />
+          <WorkspaceProbe />
+        </WorkspaceProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   );
 }
@@ -199,5 +203,22 @@ describe('SettingsPage backup and restore', () => {
     expect(
       screen.queryByRole('group', { name: 'Replace this browser’s workspace?' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('SettingsPage appearance', () => {
+  it('applies and stores the selected theme for this browser', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    const darkOption = screen.getByRole('radio', { name: /dark/i });
+    expect(darkOption).not.toBeChecked();
+
+    await user.click(darkOption);
+
+    expect(darkOption).toBeChecked();
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    expect(document.documentElement).toHaveClass('dark');
+    expect(screen.getByText('Dark theme')).toBeInTheDocument();
   });
 });

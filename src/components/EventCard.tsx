@@ -164,7 +164,7 @@ export function EventCard({
               onClick={() => onEdit(event.id)}
               aria-haspopup="dialog"
               aria-label={`Edit ${event.name}`}
-              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-maroon-800 transition-colors duration-150 hover:border-maroon-600 hover:bg-maroon-50"
+              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-maroon-800 transition-colors duration-150 hover:border-maroon-600 hover:bg-maroon-50 dark:text-maroon-200"
             >
               <Pencil className="size-4" aria-hidden="true" />
               Edit event
@@ -197,7 +197,7 @@ export function EventCard({
               className={`inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
                 selected
                   ? 'border-maroon-700 bg-maroon-800 text-white hover:bg-maroon-900'
-                  : 'border-line-strong bg-surface text-maroon-800 hover:border-maroon-600 hover:bg-maroon-50'
+                  : 'border-line-strong bg-surface text-maroon-800 hover:border-maroon-600 hover:bg-maroon-50 dark:text-maroon-200'
               }`}
             >
               {selected ? (

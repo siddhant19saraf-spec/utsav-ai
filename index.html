@@ -10,6 +10,20 @@
       content="UTSAV AI is a celebration and event planning workspace. Plan smarter. Celebrate better with events, budgets, tasks, and planning progress in one calm dashboard."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      (function () {
+        try {
+          var preference = localStorage.getItem('utsav-ai.theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var dark = preference === 'dark' || (preference !== 'light' && prefersDark);
+          if (dark) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (error) {
+          // Theme preference is optional; the app still renders with the light theme.
+        }
+      })();
+    </script>
     <title>UTSAV AI · Celebration &amp; Event Planner</title>
   </head>
   <body>

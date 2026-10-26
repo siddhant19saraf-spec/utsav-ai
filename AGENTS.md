@@ -9,7 +9,8 @@ settings, routing, per-event budget planning, deterministic repair proposals, de
 event-rescue analysis with explicit atomic approval, guarded local persistence with schema
 versioning and recovery, timeline and task management, guest and RSVP management, a
 deterministic catering estimator, a centralized deterministic Risk Intelligence engine with
-reconciliation and dismissal history, validated JSON export/import, and an advisory AI Planner
+reconciliation and dismissal history, validated JSON export/import, light/dark/system
+theming, and an advisory AI Planner
 with a server-side API provider boundary are implemented. The Node server can also serve the
 production SPA and a health endpoint, and a single-service Render Blueprint is prepared.
 **A public static demo is deployed** at **https://utsav-ai-9evw6i99uw4.qoder.website**
@@ -59,6 +60,8 @@ validation, risk severity, feasibility, and approval.
   builder, client HTTP boundary, deterministic plan validation, proposal approval, local
   fallback outline, labels, and the AI Planner UI. It must not duplicate budget, timeline,
   task, guest, catering, or risk rules; it calls those modules.
+- `src/features/theme/` owns the theme preference context, the device color-scheme
+  subscription, and document class application. It must not read or mutate planning data.
 - `server/` owns the Node server: environment config, HTTP routing and hardening, the health
   endpoint, optional static SPA serving, rate limiting, the provider interface, prompt
   construction, and response validation. It is a provider proxy and static file server, not
@@ -194,6 +197,15 @@ Report failures honestly. Never claim a test passed without running it.
 - Styling uses Tailwind CSS v4 through `@tailwindcss/vite`. Design tokens and reusable
   `.btn-*`, `.field-*`, and `.surface-card` classes live in `src/app/index.css` under
   `@theme` and `@layer components`. Icons come from `lucide-react`.
+- Theme is a presentation preference, never workspace data. `ThemeProvider` (above the
+  router) resolves `light`, `dark`, or `system` against `prefers-color-scheme`, stores the
+  choice under `utsav-ai.theme`, and toggles the `dark` class on the document root; a
+  pre-paint script in `index.html` prevents a theme flash. Dark mode overrides tokens under
+  `html.dark`: tint tokens (50/100) darken, text and accent mid-tones lighten, danger
+  buttons use `rust-800`/`rust-900` for white labels, and the permanently dark navigation
+  rail uses theme-independent `nav-*` tokens. Add a `dark:` variant when a token has two
+  roles in one class list (for example text on a surface and a white-text button background).
+  Theme state is not exported or sent anywhere.
 - Routing uses React Router DOM 7 with real routes for every navigation destination.
   Workspace state uses React context plus `useReducer`; do not add a state library without a
   concrete requirement.

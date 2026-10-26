@@ -5,14 +5,19 @@ import {
   FileJson,
   HardDrive,
   Minus,
+  Monitor,
+  Moon,
   ShieldCheck,
+  Sun,
   Upload,
 } from 'lucide-react';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useTheme } from '@/features/theme/themeContext';
 import { toIsoDate } from '@/lib/date';
+import type { ThemePreference } from '@/lib/theme';
 import {
   useWorkspace,
   type WorkspacePersistenceStatus,
@@ -56,6 +61,22 @@ interface PendingImport {
   readonly findings: number;
 }
 
+const themeOptions: ReadonlyArray<{
+  readonly value: ThemePreference;
+  readonly label: string;
+  readonly description: string;
+  readonly Icon: typeof Sun;
+}> = [
+  { value: 'light', label: 'Light', description: 'Always use the light theme', Icon: Sun },
+  { value: 'dark', label: 'Dark', description: 'Always use the dark theme', Icon: Moon },
+  {
+    value: 'system',
+    label: 'System',
+    description: 'Follow your device setting',
+    Icon: Monitor,
+  },
+];
+
 export function SettingsPage() {
   const {
     workspace,
@@ -66,6 +87,7 @@ export function SettingsPage() {
     exportWorkspace,
     importWorkspace,
   } = useWorkspace();
+  const { preference, theme, setPreference } = useTheme();
   const [announcement, setAnnouncement] = useState('');
   const [dataError, setDataError] = useState('');
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
@@ -171,7 +193,7 @@ export function SettingsPage() {
       <PageHeader
         eyebrow="Settings"
         title="Workspace settings"
-        description="Control the sample dataset, back up your local workspace, and review exactly what is connected in this build. This is a frontend preview, not a production account."
+        description="Control the sample dataset, choose how this workspace looks, back up your local data, and review exactly what is connected in this build. This is a frontend preview, not a production account."
         actions={
           <Link to="/" className="btn-secondary">
             Back to overview
@@ -367,6 +389,75 @@ export function SettingsPage() {
         </section>
       </div>
 
+      <section className="surface-card p-5 sm:p-6" aria-labelledby="appearance-heading">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span
+              className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-maroon-100 bg-maroon-50 text-maroon-700"
+              aria-hidden="true"
+            >
+              {theme === 'dark' ? (
+                <Moon className="size-5" strokeWidth={1.7} />
+              ) : (
+                <Sun className="size-5" strokeWidth={1.7} />
+              )}
+            </span>
+            <div>
+              <h2 id="appearance-heading" className="text-xl font-semibold text-ink">
+                Appearance
+              </h2>
+              <p className="mt-1 text-xs text-ink-muted">
+                Theme preference for this browser
+              </p>
+            </div>
+          </div>
+          <StatusBadge tone="info" showDot={false}>
+            {theme === 'dark' ? 'Dark theme' : 'Light theme'}
+          </StatusBadge>
+        </div>
+
+        <fieldset className="mt-5">
+          <legend className="field-label">Theme</legend>
+          <p className="field-hint mt-1">
+            Saved in this browser only. &ldquo;System&rdquo; follows your device setting and
+            updates when it changes.
+          </p>
+          <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+            {themeOptions.map((option) => {
+              const OptionIcon = option.Icon;
+
+              return (
+                <label key={option.value} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="theme-preference"
+                    value={option.value}
+                    checked={preference === option.value}
+                    onChange={() => setPreference(option.value)}
+                    className="peer sr-only"
+                  />
+                  <span className="flex h-full items-start gap-3 rounded-2xl border border-line bg-surface p-3.5 transition-colors hover:border-line-strong peer-checked:border-maroon-600 peer-checked:bg-maroon-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-sage-600">
+                    <OptionIcon
+                      className="mt-0.5 size-4 shrink-0 text-maroon-700"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-ink">
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-ink-muted">
+                        {option.description}
+                      </span>
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      </section>
+
       <section className="surface-card p-5 sm:p-6" aria-labelledby="backup-heading">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -450,7 +541,7 @@ export function SettingsPage() {
               <button
                 type="button"
                 onClick={handleConfirmImport}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-rust-700 bg-rust-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rust-700"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-rust-800 bg-rust-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rust-800"
               >
                 Replace my workspace
               </button>

@@ -4,7 +4,7 @@ This file records what is implemented, what has been verified, and what is inten
 
 **Last reviewed:** 2026-10-26
 **Verified environment:** Node.js v24.16.0, npm 11.13.0
-**Automated baseline:** 512 tests across 50 files passed; typecheck, lint, and build passed; `npm audit` reported 0 vulnerabilities.
+**Automated baseline:** 529 tests across 52 files passed; typecheck, lint, and build passed; `npm audit` reported 0 vulnerabilities.
 
 ## Status definitions
 
@@ -65,9 +65,9 @@ This file records what is implemented, what has been verified, and what is inten
 
 | Area | Status | What exists | Evidence and limits |
 | --- | --- | --- | --- |
-| Automated tests | **Implemented and verified** | 512 tests across 50 files, including unit, integration, UI, server, validation, privacy, health, static-serving, stale/duplicate, keyboard activation, route-loading, and error-recovery scenarios. | `npm run test` passed on 2026-10-26. |
+| Automated tests | **Implemented and verified** | 529 tests across 52 files, including unit, integration, UI, server, validation, privacy, health, static-serving, stale/duplicate, keyboard activation, route-loading, and error-recovery scenarios. | `npm run test` passed on 2026-10-26. |
 | Type checking and linting | **Implemented and verified** | Strict TypeScript typecheck and ESLint with zero tolerated warnings. | `npm run typecheck` and `npm run lint` passed on 2026-10-26. |
-| Production build | **Implemented and verified** | `tsc -b && vite build` succeeds and emits route-level JavaScript chunks plus CSS. The entry chunk is 448.69 kB (131.75 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 54.48 kB (9.52 kB gzip). | `npm run build` passed; no Vite chunk-size warning. These are local bundle sizes, not field-performance measurements. |
+| Production build | **Implemented and verified** | `tsc -b && vite build` succeeds and emits route-level JavaScript chunks plus CSS. The entry chunk is 451.60 kB (132.57 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 57.26 kB (10.17 kB gzip). | `npm run build` passed; no Vite chunk-size warning. These are local bundle sizes, not field-performance measurements. |
 | Dependency audit | **Implemented and verified for the recorded run** | `npm audit` reported 0 vulnerabilities at the documented date. This is a point-in-time report, not a guarantee. | Recorded 2026-10-26. |
 | Keyboard and dialog accessibility | **Implemented but not fully verified** | Semantic controls, labels, landmarks, visible focus, Escape close for dialogs, focus restoration, live status announcements. Mobile nav and dialog keyboard flows are tested. | `App.test.tsx` and page tests; no formal accessibility audit, screen-reader certification, or full keyboard matrix. |
 | Responsive layouts | **Implemented but not fully verified** | Responsive Tailwind layouts and a mobile navigation drawer exist. | Source and automated navigation tests; not tested on a broad physical-device matrix. |
@@ -110,8 +110,8 @@ Actual command results from the latest full run:
 | --- | --- |
 | `npm run typecheck` | Passed (exit 0) |
 | `npm run lint` | Passed, zero warnings |
-| `npm run test` | 512 passed / 512; 50 test files passed |
-| `npm run build` | Passed; entry JS 448.69 kB (131.75 kB gzip), largest route chunk 74.98 kB (18.53 kB gzip), CSS 54.48 kB (9.52 kB gzip); no chunk-size warning |
+| `npm run test` | 529 passed / 529; 52 test files passed |
+| `npm run build` | Passed; entry JS 451.60 kB (132.57 kB gzip), largest route chunk 74.98 kB (18.53 kB gzip), CSS 57.26 kB (10.17 kB gzip); no chunk-size warning |
 | `npm audit` | 0 vulnerabilities reported |
 
 What these results do **not** establish:

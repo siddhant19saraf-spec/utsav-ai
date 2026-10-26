@@ -1,6 +1,7 @@
-import { HardDrive, Menu, Settings, X } from 'lucide-react';
+import { HardDrive, Menu, Moon, Settings, Sun, X } from 'lucide-react';
 import type { RefObject } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '@/features/theme/themeContext';
 import { BrandMark } from './BrandMark';
 import { allNavigationItems } from './navigation';
 
@@ -18,6 +19,8 @@ export function Header({
   navigationButtonRef,
 }: HeaderProps) {
   const { pathname } = useLocation();
+  const { theme, setPreference } = useTheme();
+  const nextTheme = theme === 'dark' ? 'light' : 'dark';
   const currentItem = allNavigationItems.find((item) =>
     item.end ? pathname === item.to : pathname.startsWith(item.to),
   );
@@ -33,7 +36,7 @@ export function Header({
             aria-expanded={navigationOpen}
             aria-controls="mobile-navigation"
             aria-label={navigationOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-ink transition-colors hover:border-maroon-600 hover:bg-maroon-50 lg:hidden"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-ink transition-colors hover:border-maroon-600 hover:bg-maroon-50 dark:hover:text-maroon-200 lg:hidden"
           >
             {navigationOpen ? (
               <X className="size-5" aria-hidden="true" />
@@ -48,7 +51,7 @@ export function Header({
             aria-label="UTSAV AI, go to overview"
             className="flex min-w-0 items-center gap-2.5 rounded-lg lg:hidden"
           >
-            <BrandMark className="size-8 shrink-0 text-maroon-800" />
+            <BrandMark className="size-8 shrink-0 text-maroon-800 dark:text-gold-400" />
             <span className="truncate font-display text-lg font-semibold tracking-[0.08em] text-ink">
               UTSAV AI
             </span>
@@ -77,12 +80,25 @@ export function Header({
             <span className="hidden sm:inline">Saved locally</span>
             <span className="sm:hidden">Local</span>
           </span>
+          <button
+            type="button"
+            onClick={() => setPreference(nextTheme)}
+            aria-label={`Switch to ${nextTheme} theme`}
+            title={`Switch to ${nextTheme} theme`}
+            className="inline-flex size-10 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted transition-colors hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800 dark:hover:text-maroon-200"
+          >
+            {theme === 'dark' ? (
+              <Sun className="size-[1.15rem]" aria-hidden="true" strokeWidth={1.8} />
+            ) : (
+              <Moon className="size-[1.15rem]" aria-hidden="true" strokeWidth={1.8} />
+            )}
+          </button>
           <Link
             to="/settings"
             onClick={onNavigate}
             aria-label="Open settings"
             title="Settings"
-            className="inline-flex size-10 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted transition-colors hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800"
+            className="inline-flex size-10 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-muted transition-colors hover:border-maroon-600 hover:bg-maroon-50 hover:text-maroon-800 dark:hover:text-maroon-200"
           >
             <Settings className="size-[1.15rem]" aria-hidden="true" strokeWidth={1.8} />
           </Link>

@@ -166,7 +166,7 @@ export function BudgetCategoryList({
                         setConfirmingId(null);
                         onRemove(category.id);
                       }}
-                      className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-rust-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rust-700"
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-rust-800 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rust-900"
                     >
                       <Trash2 className="size-3.5" aria-hidden="true" />
                       Remove category

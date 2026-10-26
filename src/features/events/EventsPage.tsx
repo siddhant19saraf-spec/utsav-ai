@@ -359,7 +359,7 @@ export function EventsPage() {
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-rust-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust-600"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-rust-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust-900"
               >
                 <Trash2 className="size-4" aria-hidden="true" />
                 Delete event permanently

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
 import { App } from './App';
 import { AppErrorBoundary } from './AppErrorBoundary';
@@ -15,11 +16,13 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <AppErrorBoundary>
-      <BrowserRouter>
-        <WorkspaceProvider>
-          <App />
-        </WorkspaceProvider>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <WorkspaceProvider>
+            <App />
+          </WorkspaceProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </AppErrorBoundary>
   </StrictMode>,
 );

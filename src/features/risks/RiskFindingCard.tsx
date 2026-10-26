@@ -276,7 +276,7 @@ export function RiskFindingCard({
                 <li key={link.key}>
                   <Link
                     to={link.href}
-                    className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-maroon-800 hover:border-maroon-600 hover:bg-maroon-50"
+                    className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-maroon-800 hover:border-maroon-600 hover:bg-maroon-50 dark:text-maroon-200"
                   >
                     <span className="truncate">{link.label}</span>
                     <ArrowUpRight className="size-3 shrink-0" aria-hidden="true" />

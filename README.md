@@ -145,9 +145,13 @@ The AI Planner builds a privacy-minimal aggregate context for one selected event
 
 A deterministic local outline is always available and is visibly labelled **Not AI-generated**. When no provider is configured or the server is unavailable, the app remains fully usable through this fallback.
 
+### Appearance and theme
+
+The workspace supports **Light**, **Dark**, and **System** themes. The header toggle switches between light and dark, and Settings exposes all three options. The preference is stored in this browser under `utsav-ai.theme`, applied before first paint to avoid a theme flash, and follows device changes while **System** is selected. Dark mode inverts the existing maroon-and-cream design tokens; it does not send data anywhere or change planning behavior.
+
 ### Accessibility and keyboard use
 
-The UI uses semantic landmarks, labelled controls, visible focus states, keyboard-operable dialogs and navigation, status announcements, and reduced-motion support. Automated tests cover several keyboard flows, including mobile navigation focus handling and dialog Escape behavior. This is not a certified accessibility audit or screen-reader certification.
+The UI uses semantic landmarks, labelled controls, visible focus states, keyboard-operable dialogs and navigation, status announcements, and reduced-motion support. Automated tests cover several keyboard flows, including mobile navigation focus handling and dialog Escape behavior. Text and surface tokens were also checked with an automated contrast audit across all nine routes in both themes (no text samples below 3.4:1 at a 518 px viewport). This is not a certified accessibility audit or screen-reader certification.
 
 ## Implementation status
 
@@ -444,11 +448,11 @@ The required verification suite was last run on **2026-10-26** with Node.js **v2
 | --- | --- | --- |
 | Type check | `npm run typecheck` | **Passed** (`tsc -b`, exit 0) |
 | Lint | `npm run lint` | **Passed**, zero warnings (`--max-warnings=0`) |
-| Automated tests | `npm run test` | **512 tests passed across 50 test files** |
+| Automated tests | `npm run test` | **529 tests passed across 52 test files** |
 | Production build | `npm run build` | **Passed**; route-split JS chunks and CSS emitted |
 | Dependency audit | `npm audit` | **0 vulnerabilities** reported |
 
-Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 448.69 kB (131.75 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 54.48 kB (9.52 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
+Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 451.60 kB (132.57 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 57.26 kB (10.17 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
 
 What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, keyboard activation of the rescue analysis, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, lazy-route loading, error-boundary recovery, and the main UI flows with Testing Library.
 

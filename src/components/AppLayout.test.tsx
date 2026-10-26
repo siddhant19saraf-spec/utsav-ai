@@ -1,15 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
 import { AppLayout } from './AppLayout';
 
 function renderLayout(initialEntries: string[] = ['/']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
-      <WorkspaceProvider>
-        <AppLayout />
-      </WorkspaceProvider>
+      <ThemeProvider>
+        <WorkspaceProvider>
+          <AppLayout />
+        </WorkspaceProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   );
 }

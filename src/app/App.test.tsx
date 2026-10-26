@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
+import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
 import { App } from './App';
 
@@ -30,9 +31,11 @@ function findDashboardHeading() {
 function renderApp(initialEntry = '/') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
-      <WorkspaceProvider>
-        <App />
-      </WorkspaceProvider>
+      <ThemeProvider>
+        <WorkspaceProvider>
+          <App />
+        </WorkspaceProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   );
 }
@@ -154,5 +157,23 @@ describe('App', () => {
     expect(restoredButton).toHaveAttribute('aria-expanded', 'false');
     expect(restoredButton).toHaveFocus();
     expect(screen.queryByRole('navigation', { name: 'Mobile primary' })).not.toBeInTheDocument();
+  }, 15_000);
+
+  it('switches between light and dark themes from the header', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await findDashboardHeading();
+
+    expect(document.documentElement).not.toHaveClass('dark');
+
+    await user.click(screen.getByRole('button', { name: 'Switch to dark theme' }));
+
+    expect(document.documentElement).toHaveClass('dark');
+    expect(window.localStorage.getItem('utsav-ai.theme')).toBe('dark');
+
+    await user.click(screen.getByRole('button', { name: 'Switch to light theme' }));
+
+    expect(document.documentElement).not.toHaveClass('dark');
+    expect(window.localStorage.getItem('utsav-ai.theme')).toBe('light');
   }, 15_000);
 });

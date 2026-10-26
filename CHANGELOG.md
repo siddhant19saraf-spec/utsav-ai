@@ -15,6 +15,8 @@ Notable changes to UTSAV AI are recorded here. The project does not publish tagg
 - A keyboard-activation regression test for the Event Rescue analysis action, verifying that submitting from the keyboard moves focus to the analysis result.
 - A public static deployment of the built SPA on Qoder Sites at <https://utsav-ai-9evw6i99uw4.qoder.website> over HTTPS. The deployment serves `dist/` with SPA fallback and no Node API, so the AI Planner reports **Unavailable** and the deterministic outline is used.
 - An MIT `LICENSE` file; the project is now explicitly reusable with attribution.
+- Light, Dark, and System themes. The header toggle switches between light and dark, Settings exposes all three options, and the preference is stored in this browser and applied before first paint. A standalone `ThemeProvider` owns the preference, device-scheme listener, and document class; the pure helpers live in `src/lib/theme.ts`.
+- Theme tests: preference parsing and storage, system resolution, document class and browser theme-color application, persistence, and the header and Settings controls.
 
 ### Changed
 
@@ -22,7 +24,8 @@ Notable changes to UTSAV AI are recorded here. The project does not publish tagg
 - README now documents the recorded challenge alignment, target persona, problem significance, assumptions, and the deterministic decision-engine boundaries.
 - Removed outdated statements that the repository had no CI workflow or screenshots.
 - Updated documentation to distinguish the live static deployment from the prepared-but-undeployed Node/Render service: public URL, AI **Unavailable** state, platform-managed HTTPS, observed headers, localStorage limits, and the third-party site watermark.
-- Updated the automated baseline to 512 tests across 50 files and recorded the route-split build sizes: 448.69 kB entry chunk (131.75 kB gzip), 74.98 kB largest route chunk, and 54.48 kB CSS (9.52 kB gzip).
+- Updated the automated baseline to 529 tests across 52 files and recorded the updated route-split build sizes: 451.60 kB entry chunk (132.57 kB gzip), 74.98 kB largest route chunk, and 57.26 kB CSS (10.17 kB gzip).
+- Dark-mode token roles: badge and panel tints darken while text and accent mid-tones lighten, destructive buttons use dedicated `rust-800`/`rust-900` tokens so white labels stay readable, and the permanently dark navigation rail uses theme-independent `nav-*` tokens.
 
 ### Fixed
 

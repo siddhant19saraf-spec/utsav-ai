@@ -784,7 +784,7 @@ export function AiPlanResult({
                   {eventId ? (
                     <Link
                       to={`/risks?event=${eventId}`}
-                      className="mt-1.5 inline-flex text-xs font-semibold text-maroon-700 hover:text-maroon-900"
+                      className="mt-1.5 inline-flex text-xs font-semibold text-maroon-700 hover:text-maroon-900 dark:hover:text-maroon-100"
                     >
                       Review the saved finding in Risk Intelligence
                     </Link>

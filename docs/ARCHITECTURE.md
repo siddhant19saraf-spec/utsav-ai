@@ -90,12 +90,23 @@ The prepared Render Blueprint (`render.yaml`) uses one web service with `npm ci 
 | `src/features/guests/` | Guest validation, search, RSVP filters, counts, guest and catering-estimate UI | Sending guest data externally |
 | `src/features/catering/` | Deterministic estimator using confirmed RSVPs or expected count, buffer math, per-event assumption | Treating estimates as vendor quotes |
 | `src/features/ai/` | Shared AI contracts, privacy-minimal context builder, HTTP client, fallback outline, deterministic plan validation, preview/approval state, AI UI | Budget/timeline/guest/risk rules of its own; changing protected constraints |
+| `src/features/theme/` | Theme preference context, device color-scheme subscription, and document class application | Planning data, workspace state, or persisted settings beyond the theme key |
 | `server/` | Server-only environment config, HTTP routing and hardening, health endpoint, static SPA serving, rate limiting, provider adapter, prompt construction, response validation | Business logic, planning-data persistence, state between requests |
-| `src/lib/` | Framework-free date and money utilities | React or feature state |
+| `src/lib/` | Framework-free date, money, and theme-preference utilities | React or feature state |
 | `src/types/` | Shared domain and UI contracts | Runtime validation by itself |
 | `src/test/` | Vitest setup and shared fixtures | Production behavior |
 
 The optional server imports shared AI schemas from `src/features/ai/contracts.ts` with explicit `.ts` extensions so browser and server validation cannot drift. Server code runs directly under Node's native TypeScript execution, so it avoids non-erasable TypeScript syntax and uses explicit `.ts` imports.
+
+## Theme boundary
+
+Theme is a presentation preference, not workspace data.
+
+- `src/lib/theme.ts` contains framework-free parsing, resolution, storage, and document-application helpers. The preference key is `utsav-ai.theme` and accepts `light`, `dark`, or `system`; unknown values fall back to `system`.
+- `ThemeProvider` resolves the preference against `prefers-color-scheme`, subscribes to device changes, and applies the `dark` class to the document root plus the matching `theme-color` meta value. It is mounted above the router and workspace provider.
+- `index.html` contains a small pre-paint script that reads the same key and applies the class before React renders, so a saved theme does not flash the opposite palette.
+- Dark mode is implemented by overriding design tokens under `html.dark` in `src/app/index.css`. Tint tokens (50/100) darken, text and accent mid-tones lighten, and the permanently dark navigation rail uses theme-independent `nav-*` tokens so its light text does not invert.
+- The preference is the only value stored by this module. It is not included in workspace export/import and is never sent to any service.
 
 ## Data model
 
