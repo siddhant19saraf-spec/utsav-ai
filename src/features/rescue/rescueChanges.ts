@@ -1,4 +1,5 @@
 import { formatEventDate } from '@/lib/date';
+import { formatCount } from '@/lib/format';
 import { formatMoney } from '@/lib/money';
 import type { BudgetCategory } from '@/types/budget';
 import type { CelebrationEvent } from '@/types/domain';
@@ -8,10 +9,6 @@ import {
   rescueThemeLabel,
 } from './rescueLabels';
 import type { RescueChange } from './rescueTypes';
-
-function formatCount(value: number): string {
-  return new Intl.NumberFormat('en-IN').format(value);
-}
 
 function answerLabel(value: boolean | null | undefined): string {
   if (value === true) {

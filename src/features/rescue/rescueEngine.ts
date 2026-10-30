@@ -2,11 +2,17 @@ import {
   calculateBudgetTotals,
   type BudgetTotals,
 } from '@/features/budget/calculations';
+import { findCateringCategory } from '@/features/budget/catering';
 import { proposeBudgetRepair } from '@/features/budget/repair';
 import { calculateCateringEstimate } from '@/features/catering/cateringEstimator';
 import { getGuestCounts } from '@/features/guests/guestRules';
 import { findActivityOverlaps } from '@/features/timeline/activityRules';
-import { cloneEvent, cloneEventBudget, createEventSnapshotSignature } from '@/lib/eventSnapshot';
+import {
+  cloneBudgetCategory,
+  cloneEvent,
+  cloneEventBudget,
+  createEventSnapshotSignature,
+} from '@/lib/eventSnapshot';
 import { formatMoney } from '@/lib/money';
 import type { BudgetCategory, EventBudget } from '@/types/budget';
 import type { CelebrationEvent, Money } from '@/types/domain';
@@ -33,39 +39,6 @@ interface CateringRecalculation {
   readonly adjustments: readonly CateringAdjustment[];
   readonly usable: boolean;
   readonly overflowed: boolean;
-}
-
-function cloneCategory(category: BudgetCategory): BudgetCategory {
-  return {
-    ...category,
-    planned: { ...category.planned },
-    actual: { ...category.actual },
-    flexibility:
-      category.flexibility.mode === 'protected'
-        ? { mode: 'protected' }
-        : {
-            mode: 'flexible',
-            minimumPlanned: { ...category.flexibility.minimumPlanned },
-          },
-  };
-}
-
-function findCateringCategory(
-  categories: readonly BudgetCategory[],
-): BudgetCategory | null {
-  const exact = categories.find(
-    (category) => category.name.trim().toLowerCase() === 'catering',
-  );
-
-  return (
-    exact ??
-    categories.find(
-      (category) =>
-        category.id.toLowerCase().includes('catering') ||
-        category.name.toLowerCase().includes('catering'),
-    ) ??
-    null
-  );
 }
 
 /**
@@ -184,10 +157,10 @@ function recalculateCatering(
   const nextCategories = categories.map((category) =>
     category.id === catering.id
       ? {
-          ...cloneCategory(category),
+          ...cloneBudgetCategory(category),
           planned: { amountMinor: adjustedMinor, currency: 'INR' as const },
         }
-      : cloneCategory(category),
+      : cloneBudgetCategory(category),
   );
 
   return {
@@ -487,7 +460,7 @@ export function analyzeEventRescue(input: RescueEngineInput): RescueResult {
   const preRepairBudget: EventBudget = {
     ...cloneEventBudget(event.budget),
     totalAvailable: { ...effective.totalAvailable },
-    categories: catering.categories.map(cloneCategory),
+    categories: catering.categories.map(cloneBudgetCategory),
   };
   const preRepairTotals = safeTotals(preRepairBudget);
 
@@ -511,7 +484,7 @@ export function analyzeEventRescue(input: RescueEngineInput): RescueResult {
   const proposedBudget: EventBudget = {
     ...cloneEventBudget(event.budget),
     totalAvailable: { ...effective.totalAvailable },
-    categories: repair.categories.map(cloneCategory),
+    categories: repair.categories.map(cloneBudgetCategory),
     updatedAt: timestamp,
   };
   const candidateEvent = proposedEvent(event, proposedBudget, effective);

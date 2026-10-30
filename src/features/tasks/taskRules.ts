@@ -1,4 +1,4 @@
-import { addDays, isValidIsoDate, toIsoDate } from '@/lib/date';
+import { addDays, isValidIsoDate } from '@/lib/date';
 import type {
   CelebrationEvent,
   PlanningTask,
@@ -196,8 +196,4 @@ export function defaultTaskDraft(
     priority: 'medium',
     assignee: '',
   };
-}
-
-export function todayIsoString(): string {
-  return toIsoDate(new Date());
 }

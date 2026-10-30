@@ -1,21 +1,7 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  RefreshCw,
-  ServerCog,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from 'react';
+import { RefreshCw, Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
-import { StatusBadge } from '@/components/StatusBadge';
 import { toIsoDate } from '@/lib/date';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { fetchAiStatus, requestAiPlan } from './aiClient';
@@ -25,29 +11,23 @@ import {
   buildAiEventContext,
 } from './aiContext';
 import { buildLocalFallbackPlan } from './aiFallback';
-import {
-  aiModeDescriptions,
-  aiModeExamples,
-  aiModeLabels,
-  aiModePlaceholders,
-} from './aiLabels';
+import { aiModeLabels } from './aiLabels';
 import { AiPlanResult, type AiPlanSelection } from './AiPlanResult';
+import {
+  AiRequestPanel,
+  type AiRequestFailure,
+  type AiRequestPending,
+} from './AiRequestPanel';
+import { AiServerStatusPanel, type AiStatusState } from './AiServerStatusPanel';
 import {
   validateAiPlan,
   type AiPlanValidation,
 } from './planValidation';
 import {
-  AI_PLAN_MODES,
   type AiPlanEnvelope,
   type AiPlanMode,
   type AiPlanRequest,
-  type AiStatus,
 } from './contracts';
-
-type StatusState =
-  | { readonly state: 'loading' }
-  | { readonly state: 'ready'; readonly status: AiStatus }
-  | { readonly state: 'error'; readonly message: string };
 
 interface GeneratedPlan {
   readonly envelope: AiPlanEnvelope;
@@ -55,26 +35,10 @@ interface GeneratedPlan {
   readonly contextSignature: string;
 }
 
-interface RequestFailure {
-  readonly code: string;
-  readonly message: string;
-  readonly requestId: string | null;
-}
-
-type PendingKind = 'provider' | 'fallback' | null;
-
 const emptySelection: AiPlanSelection = {
   timelineIndexes: [],
   taskIndexes: [],
 };
-
-function statusTone(state: StatusState): 'success' | 'warning' | 'neutral' {
-  if (state.state === 'ready') {
-    return state.status.configured ? 'success' : 'warning';
-  }
-
-  return state.state === 'error' ? 'warning' : 'neutral';
-}
 
 export function AiPlanningPage() {
   const {
@@ -91,12 +55,12 @@ export function AiPlanningPage() {
   const [mode, setMode] = useState<AiPlanMode>('create-plan');
   const [message, setMessage] = useState('');
   const [messageError, setMessageError] = useState('');
-  const [statusState, setStatusState] = useState<StatusState>({
+  const [statusState, setStatusState] = useState<AiStatusState>({
     state: 'loading',
   });
   const [statusAttempt, setStatusAttempt] = useState(0);
-  const [pending, setPending] = useState<PendingKind>(null);
-  const [requestError, setRequestError] = useState<RequestFailure | null>(null);
+  const [pending, setPending] = useState<AiRequestPending>(null);
+  const [requestError, setRequestError] = useState<AiRequestFailure | null>(null);
   const [result, setResult] = useState<GeneratedPlan | null>(null);
   const [selection, setSelection] = useState<AiPlanSelection>(emptySelection);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -104,6 +68,7 @@ export function AiPlanningPage() {
   const [applyError, setApplyError] = useState('');
   const [appliedMessage, setAppliedMessage] = useState('');
   const [announcement, setAnnouncement] = useState('');
+  const requestSequenceRef = useRef(0);
 
   const findings = useMemo(
     () => workspace.riskFindings ?? [],
@@ -213,7 +178,7 @@ export function AiPlanningPage() {
   );
 
   const generate = useCallback(
-    async (kind: Exclude<PendingKind, null>) => {
+    async (kind: Exclude<AiRequestPending, null>) => {
       if (pending) {
         return;
       }
@@ -249,6 +214,8 @@ export function AiPlanningPage() {
         message: trimmed,
         event: contextResult.context,
       };
+      const sequence = requestSequenceRef.current + 1;
+      requestSequenceRef.current = sequence;
 
       setPending(kind);
       setRequestError(null);
@@ -267,6 +234,10 @@ export function AiPlanningPage() {
 
       if (kind === 'provider') {
         const response = await requestAiPlan(request);
+
+        if (requestSequenceRef.current !== sequence) {
+          return;
+        }
 
         if (!response.ok) {
           setRequestError({
@@ -340,12 +311,32 @@ export function AiPlanningPage() {
     ],
   );
 
-  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
-    formEvent.preventDefault();
-    void generate('provider');
+  function retryStatus() {
+    setStatusState({ state: 'loading' });
+    setStatusAttempt((attempt) => attempt + 1);
+  }
+
+  function handleMessageChange(value: string) {
+    setMessage(value);
+
+    if (messageError) {
+      setMessageError('');
+    }
+  }
+
+  function handleUseExample(value: string) {
+    setMessage(value);
+    setMessageError('');
   }
 
   function handleEventChange(value: string) {
+    const discardedRequest = pending !== null;
+
+    if (discardedRequest) {
+      requestSequenceRef.current += 1;
+      setPending(null);
+    }
+
     setEventId(value);
     setResult(null);
     setSelection(emptySelection);
@@ -356,10 +347,13 @@ export function AiPlanningPage() {
     setMessageError('');
     setSearchParams(value ? { event: value } : {}, { replace: true });
     const event = workspace.events.find((entry) => entry.id === value);
+    const cancelledNotice = discardedRequest
+      ? 'The in-flight request was discarded because the saved event changed. '
+      : '';
     setAnnouncement(
       event
-        ? `AI planning now uses ${event.name}. Generate a new plan for this event.`
-        : 'Advisory AI planning selected. No saved event will be changed.',
+        ? `${cancelledNotice}AI planning now uses ${event.name}. Generate a new plan for this event.`
+        : `${cancelledNotice}Advisory AI planning selected. No saved event will be changed.`,
     );
   }
 
@@ -461,117 +455,7 @@ export function AiPlanningPage() {
         {announcement}
       </div>
 
-      <section
-        aria-labelledby="ai-status-heading"
-        className="surface-card p-5 sm:p-6"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-blue-100 bg-slate-blue-50 text-slate-blue-700"
-              aria-hidden="true"
-            >
-              <ServerCog className="size-5" strokeWidth={1.7} />
-            </span>
-            <div>
-              <h2
-                id="ai-status-heading"
-                className="text-xl font-semibold tracking-[-0.01em] text-ink"
-              >
-                Server-side AI status
-              </h2>
-              <p className="mt-1 text-xs leading-relaxed text-ink-muted">
-                The browser calls the same-origin API at <code>/api</code>. Provider keys
-                stay in the API server’s environment and are never bundled into this page.
-              </p>
-            </div>
-          </div>
-          <StatusBadge tone={statusTone(statusState)} showDot={false}>
-            {statusState.state === 'loading'
-              ? 'Checking'
-              : statusState.state === 'error'
-                ? 'Unavailable'
-                : statusState.status.configured
-                  ? 'Configured'
-                  : 'Not configured'}
-          </StatusBadge>
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-line bg-surface-muted/55 px-4 py-3.5">
-          {statusState.state === 'loading' ? (
-            <p className="text-sm text-ink-muted">Checking the AI API server…</p>
-          ) : statusState.state === 'error' ? (
-            <>
-              <p className="flex items-start gap-2 text-sm leading-relaxed text-ink">
-                <AlertTriangle
-                  className="mt-0.5 size-4 shrink-0 text-gold-700"
-                  aria-hidden="true"
-                />
-                {statusState.message}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusState({ state: 'loading' });
-                  setStatusAttempt((attempt) => attempt + 1);
-                }}
-                className="btn-secondary mt-3 min-h-9 px-3 py-1.5 text-xs"
-              >
-                <RefreshCw className="size-3.5" aria-hidden="true" />
-                Check again
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm leading-relaxed text-ink">
-                {statusState.status.message}
-              </p>
-              {statusState.status.configured ? (
-                <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-ink-muted">
-                  <div>
-                    <dt className="inline font-semibold text-ink">Provider: </dt>
-                    <dd className="inline">
-                      {statusState.status.providerName ?? 'Configured provider'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="inline font-semibold text-ink">Model: </dt>
-                    <dd className="inline">{statusState.status.model ?? 'Configured model'}</dd>
-                  </div>
-                  {statusState.status.limits ? (
-                    <>
-                      <div>
-                        <dt className="inline font-semibold text-ink">Timeout: </dt>
-                        <dd className="inline">
-                          {Math.round(statusState.status.limits.timeoutMs / 1_000)}s
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="inline font-semibold text-ink">Rate limit: </dt>
-                        <dd className="inline">
-                          {statusState.status.limits.rateLimitPerMinute}/minute
-                        </dd>
-                      </div>
-                    </>
-                  ) : null}
-                </dl>
-              ) : (
-                <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-                  You can still use the deterministic local outline below. It uses saved
-                  data and app rules only, and clearly labels itself as not AI-generated.
-                </p>
-              )}
-            </>
-          )}
-        </div>
-
-        <p className="mt-3 flex items-start gap-2 text-[0.6875rem] leading-relaxed text-ink-soft">
-          <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          Only event facts and aggregates are sent. Guest names, emails, notes, dietary
-          text, accessibility text, and other events are never included. AI cannot change
-          budgets, guest records, protected priorities, or apply its own proposal.
-        </p>
-      </section>
+      <AiServerStatusPanel status={statusState} onRetry={retryStatus} />
 
       {riskAnalysisErrors.length > 0 ? (
         <p
@@ -584,214 +468,24 @@ export function AiPlanningPage() {
         </p>
       ) : null}
 
-      <section
-        aria-labelledby="ai-request-heading"
-        className="surface-card p-5 sm:p-6"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-maroon-100 bg-maroon-50 text-maroon-700"
-              aria-hidden="true"
-            >
-              <Sparkles className="size-5" strokeWidth={1.7} />
-            </span>
-            <div>
-              <h2
-                id="ai-request-heading"
-                className="text-xl font-semibold tracking-[-0.01em] text-ink"
-              >
-                Describe what you need
-              </h2>
-              <p className="mt-1 text-xs leading-relaxed text-ink-muted">
-                Choose a saved event for event-specific context, or ask for an advisory
-                plan without one. The AI never invents vendor prices, bookings, or live
-                availability.
-              </p>
-            </div>
-          </div>
-          <StatusBadge tone={configured ? 'success' : 'warning'} showDot={false}>
-            {configured ? 'AI provider available' : 'Local outline available'}
-          </StatusBadge>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4" noValidate>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="ai-event" className="field-label">
-                Saved event
-              </label>
-              <select
-                id="ai-event"
-                value={activeEvent?.id ?? ''}
-                onChange={(changeEvent) => handleEventChange(changeEvent.target.value)}
-                className="field-control mt-1.5"
-              >
-                <option value="">No saved event — advisory plan</option>
-                {workspace.events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.name}
-                  </option>
-                ))}
-              </select>
-              <p className="field-hint mt-1.5">
-                {activeEvent
-                  ? `${activeEvent.expectedGuests} expected guests · ${openRiskCount} open deterministic ${
-                      openRiskCount === 1 ? 'finding' : 'findings'
-                    } available for summaries.`
-                  : workspace.events.length === 0
-                    ? 'Create an event in My Events to apply tasks and timeline suggestions.'
-                    : 'Advisory plans can be read but cannot add tasks or activities to an event.'}
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="ai-mode" className="field-label">
-                Request type
-              </label>
-              <select
-                id="ai-mode"
-                value={mode}
-                onChange={(changeEvent) =>
-                  handleModeChange(changeEvent.target.value as AiPlanMode)
-                }
-                className="field-control mt-1.5"
-              >
-                {AI_PLAN_MODES.map((entry) => (
-                  <option key={entry} value={entry}>
-                    {aiModeLabels[entry]}
-                  </option>
-                ))}
-              </select>
-              <p className="field-hint mt-1.5">{aiModeDescriptions[mode]}</p>
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="ai-message" className="field-label">
-              Your request
-            </label>
-            <textarea
-              id="ai-message"
-              rows={5}
-              value={message}
-              onChange={(changeEvent) => {
-                setMessage(changeEvent.target.value);
-                if (messageError) {
-                  setMessageError('');
-                }
-              }}
-              maxLength={2_000}
-              placeholder={aiModePlaceholders[mode]}
-              aria-describedby="ai-message-hint ai-message-count ai-message-error"
-              aria-invalid={messageError ? true : undefined}
-              className="field-control mt-1.5 min-h-28 resize-y"
-            />
-            <div className="mt-1.5 flex flex-wrap items-start justify-between gap-2">
-              <p id="ai-message-hint" className="field-hint max-w-xl">
-                {mode === 'summarize-risks' && activeEvent && openRiskCount === 0
-                  ? 'No open deterministic findings are saved for this event, so there is nothing to summarize yet.'
-                  : 'Describe the event type, budget, date, venue, guest count, and priorities that matter. The app supplies the saved facts.'}
-              </p>
-              <p id="ai-message-count" className="text-xs text-ink-soft tabular-nums">
-                {message.length} / 2000
-              </p>
-            </div>
-            {messageError ? (
-              <p id="ai-message-error" className="field-error mt-1" role="alert">
-                {messageError}
-              </p>
-            ) : null}
-          </div>
-
-          <div>
-            <p className="text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-soft uppercase">
-              Try an example
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {aiModeExamples[mode].map((example) => (
-                <button
-                  key={example}
-                  type="button"
-                  onClick={() => {
-                    setMessage(example);
-                    setMessageError('');
-                  }}
-                  className="rounded-full border border-line bg-surface px-3 py-1.5 text-left text-xs leading-relaxed text-ink-muted transition-colors hover:border-gold-400 hover:text-ink"
-                >
-                  {example}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 border-t border-line pt-4">
-            <button
-              type="submit"
-              disabled={!configured || providerBusy}
-              className="btn-primary"
-            >
-              <Sparkles className="size-4" aria-hidden="true" />
-              {pending === 'provider' ? 'Generating with AI…' : 'Generate AI plan'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void generate('fallback')}
-              disabled={providerBusy}
-              className="btn-secondary"
-            >
-              <CheckCircle2 className="size-4" aria-hidden="true" />
-              {pending === 'fallback'
-                ? 'Building local outline…'
-                : 'Build deterministic outline'}
-            </button>
-            {!configured && statusState.state !== 'loading' ? (
-              <p className="text-xs leading-relaxed text-ink-muted">
-                AI generation needs a configured server provider. The local outline is
-                always available.
-              </p>
-            ) : null}
-          </div>
-        </form>
-
-        {requestError ? (
-          <div
-            role="alert"
-            className="mt-4 rounded-2xl border border-rust-100 bg-rust-50 px-4 py-3.5"
-          >
-            <p className="text-sm font-semibold text-rust-700">
-              The request did not produce a plan
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-rust-700">
-              {requestError.message}
-            </p>
-            <p className="mt-1.5 text-[0.6875rem] text-ink-soft">
-              Error code: {requestError.code}
-              {requestError.requestId ? ` · Request ${requestError.requestId}` : ''} · Your
-              saved planning data was not changed.
-            </p>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {configured ? (
-                <button
-                  type="button"
-                  onClick={() => void generate('provider')}
-                  className="btn-secondary min-h-9 px-3 py-1.5 text-xs"
-                >
-                  <RefreshCw className="size-3.5" aria-hidden="true" />
-                  Try again
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => void generate('fallback')}
-                className="btn-secondary min-h-9 px-3 py-1.5 text-xs"
-              >
-                Build deterministic outline
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </section>
+      <AiRequestPanel
+        events={workspace.events}
+        activeEvent={activeEvent}
+        openRiskCount={openRiskCount}
+        mode={mode}
+        message={message}
+        messageError={messageError}
+        configured={configured}
+        statusLoading={statusState.state === 'loading'}
+        pending={pending}
+        requestError={requestError}
+        onEventChange={handleEventChange}
+        onModeChange={handleModeChange}
+        onMessageChange={handleMessageChange}
+        onUseExample={handleUseExample}
+        onGenerateProvider={() => void generate('provider')}
+        onGenerateFallback={() => void generate('fallback')}
+      />
 
       {pending ? (
         <div

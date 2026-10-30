@@ -29,12 +29,6 @@ export const taskPriorityLabels: Record<TaskPriority, string> = {
   high: 'High priority',
 };
 
-export const taskPriorityTones: Record<TaskPriority, StatusTone> = {
-  low: 'neutral',
-  medium: 'warning',
-  high: 'danger',
-};
-
 export const eventCategories: readonly EventCategory[] = [
   'wedding',
   'birthday',

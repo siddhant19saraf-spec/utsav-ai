@@ -336,8 +336,8 @@ export function SettingsPage() {
                 <p className="mt-1 text-xs text-ink-muted">What works and what is planned</p>
               </div>
             </div>
-            <StatusBadge tone="warning" showDot={false}>
-              Step 9 preview
+            <StatusBadge tone="info" showDot={false}>
+              Local-first build
             </StatusBadge>
           </div>
 

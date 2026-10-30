@@ -4,19 +4,45 @@ import type { CurrencyCode, Money } from '@/types/domain';
 const MINOR_UNITS_PER_MAJOR = 100;
 const currencyCodes: readonly CurrencyCode[] = ['INR', 'USD', 'EUR', 'GBP', 'AED'];
 
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+const compactFormatters = new Map<CurrencyCode, Intl.NumberFormat>();
+
+function currencyFormatter(
+  currency: CurrencyCode,
+  hasMinorUnits: boolean,
+): Intl.NumberFormat {
+  const key = `${currency}:${hasMinorUnits ? 'minor' : 'major'}`;
+  let formatter = currencyFormatters.get(key);
+
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: hasMinorUnits ? 2 : 0,
+      maximumFractionDigits: 2,
+    });
+    currencyFormatters.set(key, formatter);
+  }
+
+  return formatter;
+}
+
 export function isValidMinorUnits(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
-export function isValidMoney(value: unknown): value is Money {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
+function isCurrencyCode(value: unknown): value is CurrencyCode {
+  return currencyCodes.some((code) => code === value);
+}
 
-  const candidate = value as Record<string, unknown>;
+export function isValidMoney(value: unknown): value is Money {
   return (
-    isValidMinorUnits(candidate.amountMinor) &&
-    currencyCodes.includes(candidate.currency as CurrencyCode)
+    typeof value === 'object' &&
+    value !== null &&
+    'amountMinor' in value &&
+    isValidMinorUnits(value.amountMinor) &&
+    'currency' in value &&
+    isCurrencyCode(value.currency)
   );
 }
 
@@ -43,12 +69,9 @@ export function formatMoney(money: Money): string {
 
   const hasMinorUnits = money.amountMinor % MINOR_UNITS_PER_MAJOR !== 0;
 
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: money.currency,
-    minimumFractionDigits: hasMinorUnits ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(money.amountMinor / MINOR_UNITS_PER_MAJOR);
+  return currencyFormatter(money.currency, hasMinorUnits).format(
+    money.amountMinor / MINOR_UNITS_PER_MAJOR,
+  );
 }
 
 export function formatMoneyCompact(money: Money): string {
@@ -56,12 +79,19 @@ export function formatMoneyCompact(money: Money): string {
     throw new RangeError('Money amounts must be safe integers in minor units.');
   }
 
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: money.currency,
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(money.amountMinor / MINOR_UNITS_PER_MAJOR);
+  let formatter = compactFormatters.get(money.currency);
+
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: money.currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    });
+    compactFormatters.set(money.currency, formatter);
+  }
+
+  return formatter.format(money.amountMinor / MINOR_UNITS_PER_MAJOR);
 }
 
 export function parseRupeesToMinor(value: string): number | null {

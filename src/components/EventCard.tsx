@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { formatEventDate } from '@/lib/date';
 import { eventCategoryLabels, planningStatusMap } from '@/lib/eventMeta';
+import { formatCount } from '@/lib/format';
 import { formatMoney } from '@/lib/money';
 import type { CelebrationEvent, EventCategory } from '@/types/domain';
 import type { RiskSeverity } from '@/types/risk';
@@ -61,7 +62,7 @@ export function EventCard({
 }: EventCardProps) {
   const CategoryIcon = categoryIcons[event.category];
   const status = planningStatusMap[event.status];
-  const guestCount = new Intl.NumberFormat('en-IN').format(event.expectedGuests);
+  const guestCount = formatCount(event.expectedGuests);
   const topRiskSeverity = riskSummary?.highestSeverity ?? null;
 
   return (

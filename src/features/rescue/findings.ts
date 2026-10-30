@@ -2,6 +2,7 @@ import { calculateCateringEstimate } from '@/features/catering/cateringEstimator
 import { getGuestCounts } from '@/features/guests/guestRules';
 import { findActivityOverlaps } from '@/features/timeline/activityRules';
 import { formatActivityDateTime } from '@/lib/dateTime';
+import { formatCount, formatCountLabel } from '@/lib/format';
 import { formatMoney } from '@/lib/money';
 import type { PlanningTask } from '@/types/domain';
 import type {
@@ -12,10 +13,6 @@ import type {
 
 const MAX_LISTED_TASKS = 3;
 
-function countLabel(value: number, singular: string, plural = `${singular}s`): string {
-  return `${new Intl.NumberFormat('en-IN').format(value)} ${value === 1 ? singular : plural}`;
-}
-
 function quoteTitles(tasks: readonly PlanningTask[]): string {
   const listed = tasks
     .slice(0, MAX_LISTED_TASKS)
@@ -23,7 +20,7 @@ function quoteTitles(tasks: readonly PlanningTask[]): string {
     .join(', ');
   const remaining = tasks.length - MAX_LISTED_TASKS;
 
-  return remaining > 0 ? `${listed} and ${countLabel(remaining, 'more task')}` : listed;
+  return remaining > 0 ? `${listed} and ${formatCountLabel(remaining, 'more task')}` : listed;
 }
 
 function sortTasks(tasks: readonly PlanningTask[]): PlanningTask[] {
@@ -222,7 +219,7 @@ function detectBudgetFindings(
       certainty: 'confirmed',
       area: 'budget',
       title: 'A flexible reduction can cover the gap',
-      description: `${countLabel(input.repairReductionCount, 'flexible category', 'flexible categories')} can be reduced to bring planned expenditure within the total budget. Protected categories and flexible minimums are preserved.`,
+      description: `${formatCountLabel(input.repairReductionCount, 'flexible category', 'flexible categories')} can be reduced to bring planned expenditure within the total budget. Protected categories and flexible minimums are preserved.`,
       constraints: [
         'The deterministic rule reduces the largest reducible amount first.',
         'A feasible repair is not claimed to be globally optimal.',
@@ -259,7 +256,7 @@ function detectGuestAndCateringFindings(
       certainty: 'confirmed',
       area: 'guests',
       title: 'The guest count increases',
-      description: `Expected guests move from ${new Intl.NumberFormat('en-IN').format(originalGuests)} to ${new Intl.NumberFormat('en-IN').format(proposedGuests)} (+${new Intl.NumberFormat('en-IN').format(added)}${percent === null ? '' : `, about ${percent}%`}). Per-guest costs may no longer match the saved plan.`,
+      description: `Expected guests move from ${formatCount(originalGuests)} to ${formatCount(proposedGuests)} (+${formatCount(added)}${percent === null ? '' : `, about ${percent}%`}). Per-guest costs may no longer match the saved plan.`,
       constraints: [
         'The saved guest count is not changed until a proposal is approved.',
         'Event Rescue never changes the guest count to make a plan appear feasible.',
@@ -426,7 +423,7 @@ function detectTaskFindings(
   if (overdue.length > 0) {
     const priorityNote =
       overdueHighPriority.length > 0
-        ? ` ${countLabel(overdueHighPriority.length, 'high-priority task is', 'high-priority tasks are')} among them.`
+        ? ` ${formatCountLabel(overdueHighPriority.length, 'high-priority task is', 'high-priority tasks are')} among them.`
         : '';
 
     findings.push({
@@ -437,8 +434,8 @@ function detectTaskFindings(
       area: 'tasks',
       title:
         overdueHighPriority.length > 0
-          ? `${countLabel(overdue.length, 'task is', 'tasks are')} overdue, including high-priority work`
-          : `${countLabel(overdue.length, 'task is', 'tasks are')} overdue`,
+          ? `${formatCountLabel(overdue.length, 'task is', 'tasks are')} overdue, including high-priority work`
+          : `${formatCountLabel(overdue.length, 'task is', 'tasks are')} overdue`,
       description: `${quoteTitles(overdue)} ${overdue.length === 1 ? 'is' : 'are'} past the due date and still open.${priorityNote}`,
       constraints: [
         'Event Rescue does not reschedule or complete tasks.',
@@ -501,7 +498,7 @@ function detectConfirmedAttendanceFindings(
       certainty: 'confirmed',
       area: 'guests',
       title: 'Confirmed RSVPs exceed the expected guest count',
-      description: `${countLabel(counts.confirmed, 'guest is', 'guests are')} confirmed, which is ${countLabel(excess, 'guest')} above the ${countLabel(input.effective.expectedGuests, 'expected guest')} used in this analysis. Catering and space plans may no longer match confirmed attendance.`,
+      description: `${formatCountLabel(counts.confirmed, 'guest is', 'guests are')} confirmed, which is ${formatCountLabel(excess, 'guest')} above the ${formatCountLabel(input.effective.expectedGuests, 'expected guest')} used in this analysis. Catering and space plans may no longer match confirmed attendance.`,
       constraints: [
         'Invited guests are not the same as confirmed attendees.',
         'Event Rescue does not change the guest count or RSVP records automatically.',
@@ -544,7 +541,7 @@ function detectCateringEstimateFindings(
         certainty: 'missing-data',
         area: 'catering',
         title: 'Catering estimate is not configured',
-        description: `${countLabel(counts.confirmed, 'guest is', 'guests are')} confirmed, but no per-person catering assumption is saved. A catering cost estimate cannot be compared with the budget.`,
+        description: `${formatCountLabel(counts.confirmed, 'guest is', 'guests are')} confirmed, but no per-person catering assumption is saved. A catering cost estimate cannot be compared with the budget.`,
         constraints: [
           'No vendor price or market rate is invented.',
           'An estimate is a planning assumption, not a quotation.',
@@ -603,8 +600,8 @@ function detectCateringEstimateFindings(
 
   const source =
     estimate.attendeeSource === 'confirmed'
-      ? `${countLabel(estimate.counts.confirmed, 'confirmed guest')} with ${countLabel(estimate.bufferAttendees, 'buffer guest')}`
-      : `${countLabel(estimate.baseAttendees, 'expected guest')} with ${countLabel(estimate.bufferAttendees, 'buffer guest')}`;
+      ? `${formatCountLabel(estimate.counts.confirmed, 'confirmed guest')} with ${formatCountLabel(estimate.bufferAttendees, 'buffer guest')}`
+      : `${formatCountLabel(estimate.baseAttendees, 'expected guest')} with ${formatCountLabel(estimate.bufferAttendees, 'buffer guest')}`;
 
   return [
     {
@@ -647,7 +644,7 @@ function detectScheduleFindings(
   );
   const remaining = overlaps.length - MAX_LISTED_TASKS;
   const suffix =
-    remaining > 0 ? ` ${countLabel(remaining, 'more overlap')} not listed.` : '';
+    remaining > 0 ? ` ${formatCountLabel(remaining, 'more overlap')} not listed.` : '';
 
   return [
     {
@@ -656,7 +653,7 @@ function detectScheduleFindings(
       severity: 'warning',
       certainty: 'potential',
       area: 'schedule',
-      title: `${countLabel(overlaps.length, 'activity overlap needs', 'activity overlaps need')} review`,
+      title: `${formatCountLabel(overlaps.length, 'activity overlap needs', 'activity overlaps need')} review`,
       description: `${listed.join(' ')}${suffix}`,
       constraints: [
         'Simultaneous activities may be intentional.',

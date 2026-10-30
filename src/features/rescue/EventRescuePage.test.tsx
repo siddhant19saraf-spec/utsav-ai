@@ -235,6 +235,29 @@ describe('EventRescuePage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('focuses the invalid minimum repair floor when only that field fails validation', async () => {
+    const user = userEvent.setup();
+    renderRescue();
+
+    const decorMinimum = screen.getByLabelText('Minimum repair floor for Décor');
+
+    await user.clear(decorMinimum);
+    await user.click(
+      screen.getByRole('button', { name: 'Analyze rescue options' }),
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/valid minimum/i);
+    expect(decorMinimum).toHaveAttribute('aria-invalid', 'true');
+    expect(decorMinimum).toHaveAttribute(
+      'aria-describedby',
+      'rescue-minimum-decor-error',
+    );
+    expect(decorMinimum).toHaveFocus();
+    expect(
+      screen.queryByRole('heading', { name: 'Rescue analysis for Wedding' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('rejects a stale proposal when the event changes after analysis and never overwrites the newer event', async () => {
     const user = userEvent.setup();
     renderRescue();

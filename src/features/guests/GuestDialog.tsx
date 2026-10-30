@@ -1,7 +1,10 @@
 import { Save, UserPlus } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { ModalDialog } from '@/components/ModalDialog';
+import { FieldError } from '@/components/FieldError';
+import { FormErrorSummary } from '@/components/FormErrorSummary';
 import { formatEventDate } from '@/lib/date';
+import { clearFieldError, firstInvalidField } from '@/lib/formState';
 import type { CelebrationEvent, Guest, RsvpStatus } from '@/types/domain';
 import {
   normalizeGuestDraft,
@@ -89,15 +92,7 @@ function GuestDialogContent({
 
   function updateField<K extends keyof GuestDraft>(field: K, value: GuestDraft[K]) {
     setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => {
-      if (!(field in current)) {
-        return current;
-      }
-
-      const next = { ...current };
-      delete next[field as GuestFormField];
-      return next;
-    });
+    setErrors((current) => clearFieldError(current, field));
     setErrorSummary('');
   }
 
@@ -114,7 +109,7 @@ function GuestDialogContent({
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setErrorSummary('Please fix the highlighted fields before saving the guest.');
-      const firstInvalid = fieldOrder.find((field) => nextErrors[field]);
+      const firstInvalid = firstInvalidField(fieldOrder, nextErrors);
 
       if (firstInvalid) {
         document.getElementById(fieldIds[firstInvalid])?.focus();
@@ -139,14 +134,7 @@ function GuestDialogContent({
       initialFocusRef={nameRef}
     >
       <form noValidate onSubmit={handleSubmit} className="space-y-5 px-5 py-6 sm:px-7">
-        {errorSummary ? (
-          <div
-            role="alert"
-            className="rounded-2xl border border-rust-100 bg-rust-50 px-4 py-3 text-sm font-medium text-rust-700"
-          >
-            {errorSummary}
-          </div>
-        ) : null}
+        <FormErrorSummary message={errorSummary} />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -168,9 +156,7 @@ function GuestDialogContent({
               className={`field-control mt-1.5 ${errors.name ? 'border-rust-600' : ''}`}
             />
             {errors.name ? (
-              <p id="guest-name-error" className="field-error mt-1.5">
-                {errors.name}
-              </p>
+              <FieldError id="guest-name-error">{errors.name}</FieldError>
             ) : null}
           </div>
 
@@ -227,9 +213,7 @@ function GuestDialogContent({
             className={`field-control mt-1.5 ${errors.dietaryPreference ? 'border-rust-600' : ''}`}
           />
           {errors.dietaryPreference ? (
-            <p id="guest-dietary-error" className="field-error mt-1.5">
-              {errors.dietaryPreference}
-            </p>
+            <FieldError id="guest-dietary-error">{errors.dietaryPreference}</FieldError>
           ) : null}
         </div>
 
@@ -256,9 +240,7 @@ function GuestDialogContent({
             className={`field-control mt-1.5 ${errors.accessibilityRequest ? 'border-rust-600' : ''}`}
           />
           {errors.accessibilityRequest ? (
-            <p id="guest-accessibility-error" className="field-error mt-1.5">
-              {errors.accessibilityRequest}
-            </p>
+            <FieldError id="guest-accessibility-error">{errors.accessibilityRequest}</FieldError>
           ) : null}
         </div>
 
@@ -279,9 +261,7 @@ function GuestDialogContent({
             className={`field-control mt-1.5 resize-y ${errors.notes ? 'border-rust-600' : ''}`}
           />
           {errors.notes ? (
-            <p id="guest-notes-error" className="field-error mt-1.5">
-              {errors.notes}
-            </p>
+            <FieldError id="guest-notes-error">{errors.notes}</FieldError>
           ) : null}
         </div>
 

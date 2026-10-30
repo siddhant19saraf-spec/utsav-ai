@@ -1,7 +1,6 @@
 import {
   Accessibility,
   AlertTriangle,
-  CalendarDays,
   CheckCircle2,
   Clock3,
   LifeBuoy,
@@ -16,13 +15,14 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
+import { SelectedEventCard } from '@/components/SelectedEventCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { SummaryCard } from '@/components/SummaryCard';
-import { formatEventDate } from '@/lib/date';
 import type { CelebrationEvent, Guest, RsvpStatus } from '@/types/domain';
+import { useSelectedEvent } from '@/features/events/useSelectedEvent';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { CateringEstimatorPanel } from './CateringEstimatorPanel';
 import { GuestDialog } from './GuestDialog';
@@ -48,18 +48,7 @@ const filterLabels: Record<RsvpFilter, string> = {
 
 export function GuestsPage() {
   const { workspace } = useWorkspace();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedEventId = searchParams.get('event');
-  const selectedEvent =
-    workspace.events.find((event) => event.id === requestedEventId) ??
-    workspace.events[0] ??
-    null;
-
-  function handleEventChange(eventId: string) {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('event', eventId);
-    setSearchParams(nextParams, { replace: true });
-  }
+  const { selectedEvent, handleEventChange } = useSelectedEvent();
 
   return (
     <div className="space-y-7">
@@ -174,51 +163,16 @@ function EventGuestsContent({
         {announcement}
       </div>
 
-      <section
-        aria-labelledby="guests-event-heading"
-        className="surface-card flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6"
-      >
-        <div className="min-w-0">
-          <p className="eyebrow">Selected event</p>
-          <h2
-            id="guests-event-heading"
-            className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink"
-          >
-            {event.name}
-          </h2>
-          <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-muted">
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="size-3.5 text-gold-600" aria-hidden="true" />
-              <time dateTime={event.startsAt}>{formatEventDate(event.startsAt)}</time>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Users className="size-3.5 text-gold-600" aria-hidden="true" />
-              {event.expectedGuests} expected guests
-            </span>
-          </p>
-        </div>
-
-        <div className="w-full sm:w-72">
-          <label htmlFor="guests-event" className="field-label">
-            Event
-          </label>
-          <select
-            id="guests-event"
-            value={event.id}
-            onChange={(changeEvent) => onEventChange(changeEvent.target.value)}
-            className="field-control mt-1.5"
-          >
-            {events.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.name}
-              </option>
-            ))}
-          </select>
-          <p className="field-hint mt-1.5">
-            Guest records and counts are isolated per event.
-          </p>
-        </div>
-      </section>
+      <SelectedEventCard
+        headingId="guests-event-heading"
+        eyebrow="Selected event"
+        event={event}
+        events={events}
+        selectId="guests-event"
+        selectLabel="Event"
+        selectHint="Guest records and counts are isolated per event."
+        onEventChange={onEventChange}
+      />
 
       <section aria-label="RSVP summary" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <SummaryCard

@@ -2,9 +2,9 @@
 
 This file records what is implemented, what has been verified, and what is intentionally absent. Statuses are based on source inspection and the automated tests in this repository. A feature is not considered verified merely because it has a UI element.
 
-**Last reviewed:** 2026-10-26
+**Last reviewed:** 2026-10-28
 **Verified environment:** Node.js v24.16.0, npm 11.13.0
-**Automated baseline:** 529 tests across 52 files passed; typecheck, lint, and build passed; `npm audit` reported 0 vulnerabilities.
+**Automated baseline:** 561 tests across 59 files passed; typecheck, lint, and build passed; `npm audit` reported 0 vulnerabilities.
 
 ## Status definitions
 
@@ -33,7 +33,7 @@ This file records what is implemented, what has been verified, and what is inten
 | Budget Planner | **Implemented and verified** | Per-event total, allocated categories, planned/actual money, protected and flexible categories with minimum floors, emergency reserve, utilisation/overrun/variance, category add/edit/remove with confirmation. | `BudgetPlannerPage.test.tsx` (8 tests); `calculations.test.ts` (27 tests); `validation.test.ts` (13 tests); `budgetForm.test.ts` (15 tests); `mutations.test.ts` (10 tests). |
 | Budget repair proposal | **Implemented and verified** | Deterministic, advisory repair that reduces only eligible flexible categories, respects minimums and protections, never changes the total, and applies only after review/approval. Reports infeasible cases without inventing money. | `repair.test.ts` (9 tests); `BudgetPlannerPage.test.tsx` approval and infeasible-repair tests. Greedy, not claimed optimal. |
 | Emergency reserve | **Implemented and verified** | A protected category with fixed ID `emergency-reserve`; enabling/disabling goes through protected allocation changes; reserve is part of planned expenditure, not additional money. | `BudgetPlannerPage.test.tsx` reserve test; budget calculation and mutation tests. |
-| Event Rescue | **Implemented and verified** | Saved-event analysis, deterministic findings, constrained proposal, before/after comparison, validation report, remaining issues, explicit accept/reject/return, stale and duplicate rejection, atomic persistence, and keyboard activation of the analysis action. | `rescueEngine.test.ts` (18 tests); `rescueApproval.test.ts` (8 tests); `EventRescuePage.test.tsx` (6 tests); `rescueForm.test.ts` (6 tests). The documented Ananya budget-reduction scenario was also verified in a fresh browser profile on 2026-10-25. |
+| Event Rescue | **Implemented and verified** | Saved-event analysis, deterministic findings, constrained proposal, before/after comparison, validation report, remaining issues, explicit accept/reject/return, stale and duplicate rejection, atomic persistence, and keyboard activation of the analysis action. | `rescueEngine.test.ts` (18 tests); `rescueApproval.test.ts` (8 tests); `EventRescuePage.test.tsx` (7 tests); `rescueForm.test.ts` (6 tests); `RescueRequestForm.test.tsx` (3 tests); `rescueProposalRules.test.ts` (4 tests). The documented Ananya budget-reduction scenario was also verified in a fresh browser profile on 2026-10-25. |
 | Rescue external verification | **Not implemented** | Rescue does not contact vendors, verify booking availability, check live weather, or confirm venue accessibility. Catering recalculation is a proportional planning assumption, not a quote. | Source inspection of `src/features/rescue/`; UI disclosures. |
 | Timeline activities | **Implemented and verified** | Local date-time start/end validation, chronological sorting, status filtering, creation/editing/completion/reopen/confirmed deletion, overlap review with both saved times unchanged. | `TimelinePage.test.tsx` (5 tests); `activityRules.test.ts` (11 tests). |
 | Automatic overlap resolution | **Not implemented** | Overlaps are review prompts only; the app does not silently move, merge, or delete activities. | Source and tests confirm overlaps are surfaced but not auto-resolved. |
@@ -46,7 +46,7 @@ This file records what is implemented, what has been verified, and what is inten
 | Risk reconciliation and dismissal history | **Implemented and verified** | Stable IDs; open findings update in place; resolved findings remain in history; reappearing issues reopen; dismissed findings stay dismissed until fingerprint changes; explicit undo/restore; no duplicate open findings. | `riskReconciliation.test.ts` (15 tests); `RiskIntelligencePage.test.tsx` dismissal/restore tests. |
 | Risk thresholds UI | **Not implemented** | Thresholds are centralized and validated in `riskConfig.ts`; there is no Settings UI or user-editable threshold configuration. | Source inspection. |
 | Predictive or AI risk scoring | **Not implemented** | Risk Intelligence is deterministic and rule-based. It does not use a predictive model or AI. | Source; README and UI labels. |
-| Local persistence | **Implemented and verified** | `localStorage` workspace with schema version 2, load statuses, salvage of valid records, recovery copy for invalid/partial payloads, save failure classification, legacy record migration. | `workspaceStorage.test.ts` (39 tests); `WorkspaceProvider.test.tsx` (2 tests); `workspaceReducer.test.ts` (17 tests). |
+| Local persistence | **Implemented and verified** | `localStorage` workspace with schema version 2, load statuses, salvage of valid records, recovery copy for invalid/partial payloads, save failure classification, legacy record migration. | `workspaceStorage.test.ts` (40 tests); `WorkspaceProvider.test.tsx` (2 tests); `workspaceReducer.test.ts` (17 tests). |
 | Export and import | **Implemented and verified** | Whole-workspace validated JSON export; filename with date; import size cap of 5,000,000 characters; whole-file validation; explicit confirmation; replace-not-merge behavior. | `SettingsPage.test.tsx` export/import tests; `workspaceStorage.test.ts`. |
 | Cloud backup and sync | **Not implemented** | No hosted database, account, remote backup, sync, or automatic external backup. Deployment does not change data locality. | No server-side planning-data storage; Settings copy says no cloud sync. |
 
@@ -65,11 +65,11 @@ This file records what is implemented, what has been verified, and what is inten
 
 | Area | Status | What exists | Evidence and limits |
 | --- | --- | --- | --- |
-| Automated tests | **Implemented and verified** | 529 tests across 52 files, including unit, integration, UI, server, validation, privacy, health, static-serving, stale/duplicate, keyboard activation, route-loading, and error-recovery scenarios. | `npm run test` passed on 2026-10-26. |
-| Type checking and linting | **Implemented and verified** | Strict TypeScript typecheck and ESLint with zero tolerated warnings. | `npm run typecheck` and `npm run lint` passed on 2026-10-26. |
-| Production build | **Implemented and verified** | `tsc -b && vite build` succeeds and emits route-level JavaScript chunks plus CSS. The entry chunk is 451.60 kB (132.57 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 57.26 kB (10.17 kB gzip). | `npm run build` passed; no Vite chunk-size warning. These are local bundle sizes, not field-performance measurements. |
+| Automated tests | **Implemented and verified** | 561 tests across 59 files, including unit, integration, UI, server, validation, privacy, health, static-serving, stale/duplicate, keyboard activation, route-loading, error-recovery, and persistence-failure scenarios. | `npm run test` passed on 2026-10-28. |
+| Type checking and linting | **Implemented and verified** | Strict TypeScript typecheck and ESLint with zero tolerated warnings. | `npm run typecheck` and `npm run lint` passed on 2026-10-28. |
+| Production build | **Implemented and verified** | `tsc -b && vite build` succeeds and emits route-level JavaScript chunks plus CSS. The entry chunk is 452.58 kB (132.90 kB gzip), the largest route chunk is 73.28 kB (18.34 kB gzip), and CSS is 57.16 kB (10.16 kB gzip). | `npm run build` passed; no Vite chunk-size warning. These are local bundle sizes, not field-performance measurements. |
 | Dependency audit | **Implemented and verified for the recorded run** | `npm audit` reported 0 vulnerabilities at the documented date. This is a point-in-time report, not a guarantee. | Recorded 2026-10-26. |
-| Keyboard and dialog accessibility | **Implemented but not fully verified** | Semantic controls, labels, landmarks, visible focus, Escape close for dialogs, focus restoration, live status announcements. Mobile nav and dialog keyboard flows are tested. | `App.test.tsx` and page tests; no formal accessibility audit, screen-reader certification, or full keyboard matrix. |
+| Keyboard and dialog accessibility | **Implemented but not fully verified** | Semantic controls, labels, landmarks, visible focus, Escape close for dialogs, focus restoration, live status announcements. Mobile nav and dialog keyboard flows are tested, including a shared `ModalDialog` shell that all dialogs use. | `App.test.tsx`, `ModalDialog.test.tsx` (6 tests), and page tests; no formal accessibility audit, screen-reader certification, or full keyboard matrix. |
 | Responsive layouts | **Implemented but not fully verified** | Responsive Tailwind layouts and a mobile navigation drawer exist. | Source and automated navigation tests; not tested on a broad physical-device matrix. |
 | Reduced motion | **Implemented but not fully verified** | Reduced-motion handling exists in the design system. | Source inspection; no automated visual regression or user-preference test. |
 | End-to-end browser suite | **Not implemented** | No Playwright/Cypress suite is committed. Development browser QA is not a reproducible checked-in test artifact. | Repository inspection. |
@@ -110,8 +110,8 @@ Actual command results from the latest full run:
 | --- | --- |
 | `npm run typecheck` | Passed (exit 0) |
 | `npm run lint` | Passed, zero warnings |
-| `npm run test` | 529 passed / 529; 52 test files passed |
-| `npm run build` | Passed; entry JS 451.60 kB (132.57 kB gzip), largest route chunk 74.98 kB (18.53 kB gzip), CSS 57.26 kB (10.17 kB gzip); no chunk-size warning |
+| `npm run test` | 561 passed / 561; 59 test files passed |
+| `npm run build` | Passed; entry JS 452.58 kB (132.90 kB gzip), largest route chunk 73.28 kB (18.34 kB gzip), CSS 57.16 kB (10.16 kB gzip); no chunk-size warning |
 | `npm audit` | 0 vulnerabilities reported |
 
 What these results do **not** establish:

@@ -1,6 +1,7 @@
 import { PiggyBank, Save } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { FieldError } from '@/components/FieldError';
 import { formatMinorForInput, formatMoney } from '@/lib/money';
 import type { EmergencyReserveConfig, EventBudget } from '@/types/budget';
 import { calculateEmergencyReserve } from './calculations';
@@ -132,9 +133,7 @@ export function ReserveEditor({ budget, onSave }: ReserveEditorProps) {
             sets its protected allocation to the target.
           </p>
           {error ? (
-            <p id={errorId} className="field-error mt-1.5">
-              {error}
-            </p>
+            <FieldError id={errorId}>{error}</FieldError>
           ) : null}
         </div>
 

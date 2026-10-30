@@ -241,7 +241,3 @@ export function publicAiStatus(config: AiServerConfig): AiStatus {
     },
   };
 }
-
-export function missingProviderMessage(): string {
-  return 'AI planning is not available because the server did not initialise a provider. Nothing was changed.';
-}

@@ -12,7 +12,6 @@ import {
   type AiApiErrorBody,
   type AiErrorCode,
   type AiPlanEnvelope,
-  type AiPlanRequest,
 } from '../src/features/ai/contracts.ts';
 import { publicAiStatus, type AiServerConfig } from './config.ts';
 import { createRateLimiter, type RateLimiter } from './rateLimit.ts';
@@ -454,9 +453,7 @@ export function createApiHandler(
           return;
         }
 
-        const plan = await options.service.generatePlan(
-          parsedRequest.data as AiPlanRequest,
-        );
+        const plan = await options.service.generatePlan(parsedRequest.data);
         const envelope: AiPlanEnvelope = {
           requestId,
           generatedAt: now().toISOString(),

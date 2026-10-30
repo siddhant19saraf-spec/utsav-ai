@@ -99,6 +99,46 @@ function finalizeBootstrap(
   };
 }
 
+type ApprovalResultShape =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
+interface ApprovalOutcomeShape<TResult extends ApprovalResultShape> {
+  readonly result: TResult;
+  readonly workspace: Workspace;
+}
+
+interface ApprovalCommitOptions {
+  readonly approvedIds: Set<string>;
+  readonly approvedId: string;
+  readonly replaceWorkspace: (workspace: Workspace) => void;
+  readonly setPersistence: (persistence: WorkspacePersistence) => void;
+}
+
+/**
+ * Shared post-approval invariant for rescue proposals and AI plans: an
+ * approved change reaches in-memory state only after its atomic save
+ * succeeded, and a failed save surfaces `save-failed` without mutating the
+ * workspace or recording the approval as applied.
+ */
+function commitApproval<TResult extends ApprovalResultShape>(
+  outcome: ApprovalOutcomeShape<TResult>,
+  options: ApprovalCommitOptions,
+): TResult {
+  if (outcome.result.ok) {
+    options.approvedIds.add(options.approvedId);
+    options.replaceWorkspace(outcome.workspace);
+    options.setPersistence(localPersistence);
+  } else if (outcome.result.code === 'persistence') {
+    options.setPersistence({
+      status: 'save-failed',
+      message: outcome.result.message,
+    });
+  }
+
+  return outcome.result;
+}
+
 function createBootstrap(initialState?: Workspace): WorkspaceBootstrap {
   if (initialState) {
     return finalizeBootstrap(initialState, localPersistence);
@@ -688,7 +728,6 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
   const applyRescueProposal = useCallback(
     (proposal: RescueProposal): RescueApplyResult => {
       const now = new Date();
-      const todayIso = toIsoDate(now);
       const outcome = approveRescueProposal(
         workspaceRef.current,
         proposal,
@@ -700,29 +739,23 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
             approvedProposalIdsRef.current.has(proposalId),
           prepare: (candidate) => analyzeAtBoundary(candidate, now).workspace,
         },
-        { todayIso, now },
+        { todayIso: toIsoDate(now), now },
       );
 
-      if (outcome.result.ok) {
-        if (!outcome.action) {
-          return {
-            ok: false,
-            code: 'invalid',
-            message: 'The approved proposal produced no change. Nothing was saved.',
-          };
-        }
-
-        approvedProposalIdsRef.current.add(proposal.id);
-        replaceWorkspace(outcome.workspace);
-        setPersistence(localPersistence);
-      } else if (outcome.result.code === 'persistence') {
-        setPersistence({
-          status: 'save-failed',
-          message: outcome.result.message,
-        });
+      if (outcome.result.ok && !outcome.action) {
+        return {
+          ok: false,
+          code: 'invalid',
+          message: 'The approved proposal produced no change. Nothing was saved.',
+        };
       }
 
-      return outcome.result;
+      return commitApproval(outcome, {
+        approvedIds: approvedProposalIdsRef.current,
+        approvedId: proposal.id,
+        replaceWorkspace,
+        setPersistence,
+      });
     },
     [initialState, replaceWorkspace],
   );
@@ -744,18 +777,12 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
         { todayIso: toIsoDate(now), now },
       );
 
-      if (outcome.result.ok) {
-        approvedAiPlanIdsRef.current.add(proposal.planId);
-        replaceWorkspace(outcome.workspace);
-        setPersistence(localPersistence);
-      } else if (outcome.result.code === 'persistence') {
-        setPersistence({
-          status: 'save-failed',
-          message: outcome.result.message,
-        });
-      }
-
-      return outcome.result;
+      return commitApproval(outcome, {
+        approvedIds: approvedAiPlanIdsRef.current,
+        approvedId: proposal.planId,
+        replaceWorkspace,
+        setPersistence,
+      });
     },
     [initialState, replaceWorkspace],
   );

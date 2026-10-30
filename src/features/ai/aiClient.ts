@@ -112,6 +112,19 @@ function statusFallback(status: number): AiClientFailure {
   );
 }
 
+async function failureFromResponse(response: Response): Promise<AiClientFailure> {
+  const body = await readErrorBody(response);
+
+  return body
+    ? clientFailure(
+        body.error.code,
+        body.error.message,
+        body.error.requestId,
+        body.error.retryAfterSeconds,
+      )
+    : statusFallback(response.status);
+}
+
 export async function fetchAiStatus(
   options: ClientOptions = {},
 ): Promise<AiClientResult<AiStatus>> {
@@ -129,16 +142,7 @@ export async function fetchAiStatus(
     });
 
     if (!response.ok) {
-      const body = await readErrorBody(response);
-
-      return body
-        ? clientFailure(
-            body.error.code,
-            body.error.message,
-            body.error.requestId,
-            body.error.retryAfterSeconds,
-          )
-        : statusFallback(response.status);
+      return failureFromResponse(response);
     }
 
     let payload: unknown;
@@ -211,16 +215,7 @@ export async function requestAiPlan(
     });
 
     if (!response.ok) {
-      const body = await readErrorBody(response);
-
-      return body
-        ? clientFailure(
-            body.error.code,
-            body.error.message,
-            body.error.requestId,
-            body.error.retryAfterSeconds,
-          )
-        : statusFallback(response.status);
+      return failureFromResponse(response);
     }
 
     let payload: unknown;

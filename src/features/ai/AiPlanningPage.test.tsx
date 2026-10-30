@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -397,6 +397,61 @@ describe('AiPlanningPage', () => {
     expect(screen.getByTestId('task-count')).toHaveTextContent('1');
     expect(
       screen.queryByText('Additions approved'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('discards a provider response when the saved event changes while the request is in flight', async () => {
+    const user = userEvent.setup();
+    let resolvePlan: (response: Response) => void = () => {};
+    const deferredPlan = new Promise<Response>((resolve) => {
+      resolvePlan = resolve;
+    });
+    installFetch({
+      status: () => jsonResponse(configuredStatus),
+      plan: () => deferredPlan,
+    });
+    const base = makePageWorkspace();
+    const workspace: Workspace = {
+      ...base,
+      events: [
+        ...base.events,
+        makeEvent({
+          id: 'event-2',
+          name: 'Second Celebration',
+          startsAt: '2031-01-15',
+          expectedGuests: 40,
+          budget: makeBudget({
+            eventId: 'event-2',
+            totalAvailable: rupees(50_000),
+          }),
+        }),
+      ],
+    };
+    renderPage(workspace);
+
+    await screen.findByText(configuredStatus.message);
+    await fillRequest(user);
+    await user.click(
+      screen.getByRole('button', { name: 'Generate AI plan' }),
+    );
+    await screen.findByText(/Generating a structured plan/);
+
+    await user.selectOptions(screen.getByLabelText('Saved event'), 'event-2');
+
+    expect(
+      screen.getByText(/in-flight request was discarded/),
+    ).toBeInTheDocument();
+
+    resolvePlan(jsonResponse(makeAiEnvelope()));
+
+    await waitFor(() => {
+      expect(screen.queryByText('AI suggestion')).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole('button', { name: 'Generate AI plan' }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole('button', { name: 'Preview selected changes' }),
     ).not.toBeInTheDocument();
   });
 });

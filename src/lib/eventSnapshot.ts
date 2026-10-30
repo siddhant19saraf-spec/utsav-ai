@@ -1,7 +1,7 @@
 import type { BudgetCategory, EventBudget } from '@/types/budget';
 import type { CelebrationEvent } from '@/types/domain';
 
-function cloneCategory(category: BudgetCategory): BudgetCategory {
+export function cloneBudgetCategory(category: BudgetCategory): BudgetCategory {
   return {
     ...category,
     planned: { ...category.planned },
@@ -20,7 +20,7 @@ export function cloneEventBudget(budget: EventBudget): EventBudget {
   return {
     ...budget,
     totalAvailable: { ...budget.totalAvailable },
-    categories: budget.categories.map(cloneCategory),
+    categories: budget.categories.map(cloneBudgetCategory),
     emergencyReserve: {
       ...budget.emergencyReserve,
       target: { ...budget.emergencyReserve.target },

@@ -12,6 +12,7 @@ import {
 import type { RefObject } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { formatEventDate } from '@/lib/date';
+import { formatCount } from '@/lib/format';
 import { formatMoney } from '@/lib/money';
 import type { BudgetCategory } from '@/types/budget';
 import type { CelebrationEvent, Money } from '@/types/domain';
@@ -21,19 +22,16 @@ import {
   rescueSettingLabel,
   rescueThemeLabel,
 } from './rescueLabels';
+import { isApprovableProposal } from './rescueProposalRules';
 import type { RescueChange, RescueProposal } from './rescueTypes';
 
 interface RescueProposalPanelProps {
   readonly proposal: RescueProposal;
-  readonly approvable: boolean;
+  readonly feasible: boolean;
   readonly onAccept: () => void;
   readonly onReject: () => void;
   readonly onReturn: () => void;
   readonly headingRef?: RefObject<HTMLHeadingElement | null>;
-}
-
-function formatCount(value: number): string {
-  return new Intl.NumberFormat('en-IN').format(value);
 }
 
 function findCategory(
@@ -133,14 +131,14 @@ function ChangeCard({ change }: { readonly change: RescueChange }) {
 
 export function RescueProposalPanel({
   proposal,
-  approvable,
+  feasible,
   onAccept,
   onReject,
   onReturn,
   headingRef,
 }: RescueProposalPanelProps) {
   const { originalEvent, proposedEvent, originalBudget, proposedBudget } = proposal;
-  const canApply = approvable && proposal.validation.isValid && proposal.changes.length > 0;
+  const canApply = isApprovableProposal(proposal, feasible);
   const protectedCategories = proposal.protectedCategoryIds
     .map((categoryId) => findCategory(proposedEvent, categoryId))
     .filter((category): category is BudgetCategory => Boolean(category));

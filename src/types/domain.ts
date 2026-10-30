@@ -1,10 +1,8 @@
-export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP' | 'AED';
+import type { EventBudget } from './budget';
+import type { Money } from './money';
+import type { RiskFinding, RiskProposalSnapshot } from './risk';
 
-export interface Money {
-  /** Integer minor units (for example, paise for INR). Never a floating-point major unit. */
-  readonly amountMinor: number;
-  readonly currency: CurrencyCode;
-}
+export type { CurrencyCode, Money } from './money';
 
 export type EventCategory =
   | 'wedding'
@@ -19,9 +17,6 @@ export type PlanningStatus = 'draft' | 'planning' | 'on-track' | 'at-risk' | 'co
 export type DataOrigin = 'sample' | 'user';
 
 export type EventSetting = 'indoor' | 'outdoor' | 'mixed';
-
-import type { EventBudget } from './budget';
-import type { RiskFinding, RiskProposalSnapshot } from './risk';
 
 export interface CelebrationEvent {
   readonly id: string;

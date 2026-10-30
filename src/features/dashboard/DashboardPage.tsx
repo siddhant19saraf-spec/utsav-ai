@@ -27,6 +27,7 @@ import { SummaryCard } from '@/components/SummaryCard';
 import { TaskList, type TaskListItem } from '@/components/TaskList';
 import { toIsoDate } from '@/lib/date';
 import { formatActivityDateTime, toLocalDateTime } from '@/lib/dateTime';
+import { formatCount } from '@/lib/format';
 import { formatMoneyCompact } from '@/lib/money';
 import { EventFormDialog } from '@/features/events/EventFormDialog';
 import type { EventDraft } from '@/features/events/eventMutations';
@@ -65,7 +66,6 @@ const taskFilterOptions: readonly { value: TaskFilter; label: string }[] = [
   { value: 'completed', label: 'Done' },
 ];
 
-const numberFormatter = new Intl.NumberFormat('en-IN');
 
 export function DashboardPage() {
   const {
@@ -698,25 +698,25 @@ export function DashboardPage() {
             <div className="rounded-xl border border-line bg-surface-muted/55 px-3 py-2.5">
               <dt className="text-[0.6875rem] font-semibold text-ink-muted">Invited</dt>
               <dd className="mt-0.5 text-lg font-semibold text-ink tabular-nums">
-                {numberFormatter.format(guestSummary.invited)}
+                {formatCount(guestSummary.invited)}
               </dd>
             </div>
             <div className="rounded-xl border border-line bg-surface-muted/55 px-3 py-2.5">
               <dt className="text-[0.6875rem] font-semibold text-ink-muted">Confirmed</dt>
               <dd className="mt-0.5 text-lg font-semibold text-sage-700 tabular-nums">
-                {numberFormatter.format(guestSummary.confirmed)}
+                {formatCount(guestSummary.confirmed)}
               </dd>
             </div>
             <div className="rounded-xl border border-line bg-surface-muted/55 px-3 py-2.5">
               <dt className="text-[0.6875rem] font-semibold text-ink-muted">Pending</dt>
               <dd className="mt-0.5 text-lg font-semibold text-gold-700 tabular-nums">
-                {numberFormatter.format(guestSummary.pending)}
+                {formatCount(guestSummary.pending)}
               </dd>
             </div>
             <div className="rounded-xl border border-line bg-surface-muted/55 px-3 py-2.5">
               <dt className="text-[0.6875rem] font-semibold text-ink-muted">Declined</dt>
               <dd className="mt-0.5 text-lg font-semibold text-ink-muted tabular-nums">
-                {numberFormatter.format(guestSummary.declined)}
+                {formatCount(guestSummary.declined)}
               </dd>
             </div>
           </dl>

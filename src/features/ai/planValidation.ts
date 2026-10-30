@@ -178,25 +178,29 @@ export function calculateCateringCheck(
   };
 }
 
-/**
- * Deterministic client-side checks for an AI proposal. It reuses the existing
- * budget, task, activity, and overlap rules; it never treats AI text as a
- * calculation. Issues in budget, catering, and risks are informational or
- * blocking for display only, while selected timeline and task additions are
- * revalidated again at approval time.
- */
-export function validateAiPlan(
-  plan: AiPlan,
-  request: AiPlanRequest,
-  workspace: Workspace,
-  todayIso: string,
-): AiPlanValidation {
+type AddIssue = (
+  area: AiValidationArea,
+  severity: AiIssueSeverity,
+  code: AiPlanIssueCode,
+  message: string,
+  indexes?: {
+    readonly timeline?: number;
+    readonly task?: number;
+    readonly budget?: number;
+  },
+) => void;
+
+interface IssueCollector {
+  readonly issues: AiPlanIssue[];
+  readonly timelineIssues: Record<number, AiPlanIssue[]>;
+  readonly taskIssues: Record<number, AiPlanIssue[]>;
+  readonly addIssue: AddIssue;
+}
+
+function createIssueCollector(): IssueCollector {
   const issues: AiPlanIssue[] = [];
   const timelineIssues: Record<number, AiPlanIssue[]> = {};
   const taskIssues: Record<number, AiPlanIssue[]> = {};
-  const event = request.event
-    ? workspace.events.find((entry) => entry.id === request.event?.id) ?? null
-    : null;
 
   function addIssue(
     area: AiValidationArea,
@@ -212,8 +216,7 @@ export function validateAiPlan(
     const timelineIndex = indexes.timeline ?? null;
     const taskIndex = indexes.task ?? null;
     const budgetIndex = indexes.budget ?? null;
-    const suffix =
-      timelineIndex ?? taskIndex ?? budgetIndex ?? issues.length;
+    const suffix = timelineIndex ?? taskIndex ?? budgetIndex ?? issues.length;
     const issue: AiPlanIssue = {
       id: `${area}:${code}:${suffix}`,
       area,
@@ -236,34 +239,22 @@ export function validateAiPlan(
     }
   }
 
-  if (!event && request.event) {
-    addIssue(
-      'plan',
-      'error',
-      'no-actionable-suggestions',
-      'The selected event no longer exists in this workspace. Generate a new plan after choosing a saved event.',
-    );
-  }
+  return { issues, timelineIssues, taskIssues, addIssue };
+}
 
-  const planWantsAction =
-    request.mode === 'create-plan' || request.mode === 'revise-plan';
-  const actionableCount =
-    plan.timeline.length +
-    plan.tasks.length +
-    plan.budgetCategories.length +
-    (plan.catering ? 1 : 0);
+interface TimelineValidationArgs {
+  readonly plan: AiPlan;
+  readonly event: CelebrationEvent | null;
+  readonly workspace: Workspace;
+  readonly addIssue: AddIssue;
+}
 
-  if (planWantsAction && actionableCount === 0) {
-    addIssue(
-      'plan',
-      'warning',
-      'no-actionable-suggestions',
-      'This plan contains no timeline, task, budget, or catering suggestions. Ask for a specific plan if you expected actionable steps.',
-    );
-  }
-
-  /* Timeline ------------------------------------------------------------ */
-
+function validateTimelineSection({
+  plan,
+  event,
+  workspace,
+  addIssue,
+}: TimelineValidationArgs): void {
   const existingActivities = event
     ? workspace.activities.filter((activity) => activity.eventId === event.id)
     : [];
@@ -382,9 +373,23 @@ export function validateAiPlan(
       }
     }
   }
+}
 
-  /* Tasks --------------------------------------------------------------- */
+interface TaskValidationArgs {
+  readonly plan: AiPlan;
+  readonly event: CelebrationEvent | null;
+  readonly workspace: Workspace;
+  readonly todayIso: string;
+  readonly addIssue: AddIssue;
+}
 
+function validateTaskSection({
+  plan,
+  event,
+  workspace,
+  todayIso,
+  addIssue,
+}: TaskValidationArgs): void {
   const existingTasks = event
     ? workspace.tasks.filter((task) => task.eventId === event.id)
     : [];
@@ -455,9 +460,24 @@ export function validateAiPlan(
       );
     }
   }
+}
 
-  /* Budget -------------------------------------------------------------- */
+interface BudgetValidationArgs {
+  readonly plan: AiPlan;
+  readonly event: CelebrationEvent | null;
+  readonly addIssue: AddIssue;
+}
 
+interface BudgetValidationResult {
+  readonly suggestedTotalMinor: number | null;
+  readonly budgetDifferenceMinor: number | null;
+}
+
+function validateBudgetSection({
+  plan,
+  event,
+  addIssue,
+}: BudgetValidationArgs): BudgetValidationResult {
   const budgetValues = plan.budgetCategories.map(
     (category) => category.plannedMinor,
   );
@@ -473,8 +493,7 @@ export function validateAiPlan(
     );
   } else if (event) {
     const eventTotal = event.budget.totalAvailable.amountMinor;
-    budgetDifferenceMinor =
-      suggestedTotalMinor === null ? null : suggestedTotalMinor - eventTotal;
+    budgetDifferenceMinor = suggestedTotalMinor - eventTotal;
 
     if (eventTotal === 0 && suggestedTotalMinor > 0) {
       addIssue(
@@ -559,72 +578,102 @@ export function validateAiPlan(
     );
   }
 
-  /* Catering ------------------------------------------------------------ */
+  return { suggestedTotalMinor, budgetDifferenceMinor };
+}
 
-  let cateringCheck: AiCateringCheck | null = null;
+interface CateringValidationArgs {
+  readonly plan: AiPlan;
+  readonly request: AiPlanRequest;
+  readonly event: CelebrationEvent | null;
+  readonly addIssue: AddIssue;
+}
 
-  if (plan.catering) {
-    cateringCheck = calculateCateringCheck(
-      plan.catering,
-      event,
-      request.event,
-    );
-
-    if (
-      plan.catering.perPersonCostMinor !== null &&
-      cateringCheck.totalCostMinor === null
-    ) {
-      addIssue(
-        'catering',
-        'error',
-        'catering-overflow',
-        'The suggested catering cost exceeds the supported amount range and cannot be evaluated.',
-      );
-    }
-
-    if (cateringCheck.overBudget) {
-      addIssue(
-        'catering',
-        'warning',
-        'catering-over-budget',
-        `At the suggested per-person assumption, the app calculates ${inr(
-          cateringCheck.totalCostMinor ?? 0,
-        )} for ${cateringCheck.totalAttendees} attendees — more than the event's total budget. This is an app calculation using your suggested inputs, not a vendor quote.`,
-      );
-    }
-
-    if (
-      cateringCheck.headcountDifference !== null &&
-      cateringCheck.headcountDifference !== 0
-    ) {
-      addIssue(
-        'catering',
-        'warning',
-        'catering-headcount-differs',
-        `The suggested base headcount differs from the saved estimate by ${
-          cateringCheck.headcountDifference > 0 ? '+' : ''
-        }${cateringCheck.headcountDifference}. Confirm which guest count should be used.`,
-      );
-    }
-
-    const savedPerPerson = request.event?.catering?.perPersonCostMinor ?? null;
-
-    if (
-      savedPerPerson !== null &&
-      plan.catering.perPersonCostMinor !== null &&
-      savedPerPerson !== plan.catering.perPersonCostMinor
-    ) {
-      addIssue(
-        'catering',
-        'warning',
-        'catering-cost-differs',
-        `The suggested per-person assumption differs from the saved assumption. The app did not replace either value.`,
-      );
-    }
+function validateCateringSection({
+  plan,
+  request,
+  event,
+  addIssue,
+}: CateringValidationArgs): AiCateringCheck | null {
+  if (!plan.catering) {
+    return null;
   }
 
-  /* Risk summary -------------------------------------------------------- */
+  const cateringCheck = calculateCateringCheck(
+    plan.catering,
+    event,
+    request.event,
+  );
 
+  if (
+    plan.catering.perPersonCostMinor !== null &&
+    cateringCheck.totalCostMinor === null
+  ) {
+    addIssue(
+      'catering',
+      'error',
+      'catering-overflow',
+      'The suggested catering cost exceeds the supported amount range and cannot be evaluated.',
+    );
+  }
+
+  if (cateringCheck.overBudget) {
+    addIssue(
+      'catering',
+      'warning',
+      'catering-over-budget',
+      `At the suggested per-person assumption, the app calculates ${inr(
+        cateringCheck.totalCostMinor ?? 0,
+      )} for ${cateringCheck.totalAttendees} attendees — more than the event's total budget. This is an app calculation using your suggested inputs, not a vendor quote.`,
+    );
+  }
+
+  if (
+    cateringCheck.headcountDifference !== null &&
+    cateringCheck.headcountDifference !== 0
+  ) {
+    addIssue(
+      'catering',
+      'warning',
+      'catering-headcount-differs',
+      `The suggested base headcount differs from the saved estimate by ${
+        cateringCheck.headcountDifference > 0 ? '+' : ''
+      }${cateringCheck.headcountDifference}. Confirm which guest count should be used.`,
+    );
+  }
+
+  const savedPerPerson = request.event?.catering?.perPersonCostMinor ?? null;
+
+  if (
+    savedPerPerson !== null &&
+    plan.catering.perPersonCostMinor !== null &&
+    savedPerPerson !== plan.catering.perPersonCostMinor
+  ) {
+    addIssue(
+      'catering',
+      'warning',
+      'catering-cost-differs',
+      'The suggested per-person assumption differs from the saved assumption. The app did not replace either value.',
+    );
+  }
+
+  return cateringCheck;
+}
+
+interface RiskValidationArgs {
+  readonly plan: AiPlan;
+  readonly request: AiPlanRequest;
+  readonly workspace: Workspace;
+  readonly event: CelebrationEvent | null;
+  readonly addIssue: AddIssue;
+}
+
+function validateRiskSection({
+  plan,
+  request,
+  workspace,
+  event,
+  addIssue,
+}: RiskValidationArgs): void {
   const openFindings = event
     ? (workspace.riskFindings ?? []).filter(
         (finding) =>
@@ -677,6 +726,82 @@ export function validateAiPlan(
       'The response summarizes more risks than are currently open for this event. Only saved findings are authoritative.',
     );
   }
+}
+
+interface PlanValidationArgs {
+  readonly plan: AiPlan;
+  readonly request: AiPlanRequest;
+  readonly event: CelebrationEvent | null;
+  readonly addIssue: AddIssue;
+}
+
+function validatePlanLevel({
+  plan,
+  request,
+  event,
+  addIssue,
+}: PlanValidationArgs): void {
+  if (!event && request.event) {
+    addIssue(
+      'plan',
+      'error',
+      'no-actionable-suggestions',
+      'The selected event no longer exists in this workspace. Generate a new plan after choosing a saved event.',
+    );
+  }
+
+  const planWantsAction =
+    request.mode === 'create-plan' || request.mode === 'revise-plan';
+  const actionableCount =
+    plan.timeline.length +
+    plan.tasks.length +
+    plan.budgetCategories.length +
+    (plan.catering ? 1 : 0);
+
+  if (planWantsAction && actionableCount === 0) {
+    addIssue(
+      'plan',
+      'warning',
+      'no-actionable-suggestions',
+      'This plan contains no timeline, task, budget, or catering suggestions. Ask for a specific plan if you expected actionable steps.',
+    );
+  }
+}
+
+/**
+ * Deterministic client-side checks for an AI proposal. It reuses the existing
+ * budget, task, activity, and overlap rules; it never treats AI text as a
+ * calculation. Issues in budget, catering, and risks are informational or
+ * blocking for display only, while selected timeline and task additions are
+ * revalidated again at approval time.
+ */
+export function validateAiPlan(
+  plan: AiPlan,
+  request: AiPlanRequest,
+  workspace: Workspace,
+  todayIso: string,
+): AiPlanValidation {
+  const { issues, timelineIssues, taskIssues, addIssue } =
+    createIssueCollector();
+  const event = request.event
+    ? workspace.events.find((entry) => entry.id === request.event?.id) ?? null
+    : null;
+
+  validatePlanLevel({ plan, request, event, addIssue });
+  validateTimelineSection({ plan, event, workspace, addIssue });
+  validateTaskSection({ plan, event, workspace, todayIso, addIssue });
+  const { suggestedTotalMinor, budgetDifferenceMinor } = validateBudgetSection({
+    plan,
+    event,
+    addIssue,
+  });
+  const cateringCheck = validateCateringSection({
+    plan,
+    request,
+    event,
+    addIssue,
+  });
+  validateRiskSection({ plan, request, workspace, event, addIssue });
 
   return {
     issues,

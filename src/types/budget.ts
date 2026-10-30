@@ -1,4 +1,4 @@
-import type { Money } from './domain';
+import type { Money } from './money';
 
 export type BudgetFlexibility =
   | { readonly mode: 'protected' }

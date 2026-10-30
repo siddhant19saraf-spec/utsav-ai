@@ -5,7 +5,8 @@ import {
 import { EMERGENCY_RESERVE_CATEGORY_ID, MAX_BUDGET_AMOUNT_MINOR } from '@/features/budget/budgetConstants';
 import { validateBudget } from '@/features/budget/validation';
 import { isValidIsoDate } from '@/lib/date';
-import { createEventSnapshotSignature } from '@/lib/eventSnapshot';
+import { cloneBudgetCategory, createEventSnapshotSignature } from '@/lib/eventSnapshot';
+import { formatCount } from '@/lib/format';
 import { MAX_EVENT_GUESTS } from '@/lib/limits';
 import { formatMoney, isValidMoney } from '@/lib/money';
 import type { BudgetCategory, BudgetFlexibility } from '@/types/budget';
@@ -128,21 +129,6 @@ export function resolveRequirements(
   };
 }
 
-function cloneCategory(category: BudgetCategory): BudgetCategory {
-  return {
-    ...category,
-    planned: { ...category.planned },
-    actual: { ...category.actual },
-    flexibility:
-      category.flexibility.mode === 'protected'
-        ? { mode: 'protected' }
-        : {
-            mode: 'flexible',
-            minimumPlanned: { ...category.flexibility.minimumPlanned },
-          },
-  };
-}
-
 export function effectiveProtectedCategoryIds(
   event: CelebrationEvent,
   request: RescueRequest,
@@ -172,7 +158,7 @@ export function applyRequestedProtection(
   const protectedIds = new Set(request.protectedCategoryIds);
 
   return event.budget.categories.map((category) => {
-    const clone = cloneCategory(category);
+    const clone = cloneBudgetCategory(category);
 
     if (clone.flexibility.mode === 'protected' || protectedIds.has(clone.id)) {
       return { ...clone, flexibility: { mode: 'protected' } };
@@ -242,7 +228,7 @@ export function validateRescueRequest(
       issues.push(
         issue(
           'invalid-guest-count',
-          `Guest count must be a whole number between 1 and ${MAX_RESCUE_GUESTS.toLocaleString('en-IN')}.`,
+          `Guest count must be a whole number between 1 and ${formatCount(MAX_RESCUE_GUESTS)}.`,
         ),
       );
     }

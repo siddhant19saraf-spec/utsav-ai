@@ -1,5 +1,18 @@
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
+const eventDateFormatter = new Intl.DateTimeFormat('en-IN', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+const taskDateFormatter = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
 function parseIsoDate(isoDate: string): Date {
   const match = ISO_DATE_PATTERN.exec(isoDate);
 
@@ -47,20 +60,11 @@ export function addDays(isoDate: string, days: number): string {
 }
 
 export function formatEventDate(isoDate: string): string {
-  return new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(parseIsoDate(isoDate));
+  return eventDateFormatter.format(parseIsoDate(isoDate));
 }
 
 export function formatTaskDate(isoDate: string): string {
-  return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(parseIsoDate(isoDate));
+  return taskDateFormatter.format(parseIsoDate(isoDate));
 }
 
 export function isOverdue(dueDate: string, todayIso: string): boolean {

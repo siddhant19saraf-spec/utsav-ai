@@ -3,20 +3,20 @@ import {
   Info,
   Plus,
   ShieldAlert,
-  Users,
   Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
+import { SelectedEventCard } from '@/components/SelectedEventCard';
 import { StatusBadge } from '@/components/StatusBadge';
-import { formatEventDate } from '@/lib/date';
 import { planningStatusMap } from '@/lib/eventMeta';
 import { createId } from '@/lib/id';
 import { formatMoney } from '@/lib/money';
 import type { BudgetCategory, EmergencyReserveConfig } from '@/types/budget';
 import type { CelebrationEvent, Money } from '@/types/domain';
+import { useSelectedEvent } from '@/features/events/useSelectedEvent';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { BudgetCategoryForm } from './BudgetCategoryForm';
 import { BudgetCategoryList } from './BudgetCategoryList';
@@ -42,18 +42,7 @@ function createUniqueCategoryId(categories: readonly BudgetCategory[]): string {
 
 function BudgetPlannerPageShell() {
   const { workspace } = useWorkspace();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedEventId = searchParams.get('event');
-  const selectedEvent =
-    workspace.events.find((event) => event.id === requestedEventId) ??
-    workspace.events[0] ??
-    null;
-
-  function handleEventChange(eventId: string) {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('event', eventId);
-    setSearchParams(nextParams, { replace: true });
-  }
+  const { selectedEvent, handleEventChange } = useSelectedEvent();
 
   return (
     <div className="space-y-7">
@@ -83,60 +72,23 @@ function BudgetPlannerPageShell() {
         />
       ) : (
         <>
-          <section
-            aria-labelledby="budget-event-heading"
-            className="surface-card flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6"
+          <SelectedEventCard
+            headingId="budget-event-heading"
+            eyebrow="Event budget"
+            event={selectedEvent}
+            events={workspace.events}
+            selectId="budget-event"
+            selectLabel="Event to edit"
+            selectHint="Each event has an isolated budget. Switching events never merges allocations."
+            onEventChange={handleEventChange}
           >
-            <div className="min-w-0">
-              <p className="eyebrow">Event budget</p>
-              <h2
-                id="budget-event-heading"
-                className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink"
-              >
-                {selectedEvent.name}
-              </h2>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-muted">
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays className="size-3.5 text-gold-600" aria-hidden="true" />
-                  <time dateTime={selectedEvent.startsAt}>
-                    {formatEventDate(selectedEvent.startsAt)}
-                  </time>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Users className="size-3.5 text-gold-600" aria-hidden="true" />
-                  {new Intl.NumberFormat('en-IN').format(selectedEvent.expectedGuests)} expected
-                  guests
-                </span>
-                <StatusBadge
-                  tone={planningStatusMap[selectedEvent.status].tone}
-                  showDot={false}
-                >
-                  {planningStatusMap[selectedEvent.status].label}
-                </StatusBadge>
-              </div>
-            </div>
-
-            <div className="w-full sm:w-72">
-              <label htmlFor="budget-event" className="field-label">
-                Event to edit
-              </label>
-              <select
-                id="budget-event"
-                value={selectedEvent.id}
-                onChange={(event) => handleEventChange(event.target.value)}
-                className="field-control mt-1.5"
-              >
-                {workspace.events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.name}
-                  </option>
-                ))}
-              </select>
-              <p className="field-hint mt-1.5">
-                Each event has an isolated budget. Switching events never merges allocations.
-              </p>
-            </div>
-          </section>
+            <StatusBadge
+              tone={planningStatusMap[selectedEvent.status].tone}
+              showDot={false}
+            >
+              {planningStatusMap[selectedEvent.status].label}
+            </StatusBadge>
+          </SelectedEventCard>
 
           <BudgetPlannerContent key={selectedEvent.id} event={selectedEvent} />
         </>

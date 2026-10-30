@@ -1,7 +1,10 @@
 import { CalendarPlus, Save } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { ModalDialog } from '@/components/ModalDialog';
+import { FieldError } from '@/components/FieldError';
+import { FormErrorSummary } from '@/components/FormErrorSummary';
 import { formatEventDate } from '@/lib/date';
+import { clearFieldError, firstInvalidField } from '@/lib/formState';
 import type {
   ActivityPriority,
   CelebrationEvent,
@@ -113,15 +116,7 @@ function ActivityDialogContent({
     value: ActivityDraft[K],
   ) {
     setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => {
-      if (!(field in current)) {
-        return current;
-      }
-
-      const next = { ...current };
-      delete next[field as ActivityFormField];
-      return next;
-    });
+    setErrors((current) => clearFieldError(current, field));
     setErrorSummary('');
   }
 
@@ -138,7 +133,7 @@ function ActivityDialogContent({
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setErrorSummary('Please fix the highlighted fields before saving the activity.');
-      const firstInvalid = fieldOrder.find((field) => nextErrors[field]);
+      const firstInvalid = firstInvalidField(fieldOrder, nextErrors);
 
       if (firstInvalid) {
         document.getElementById(fieldIds[firstInvalid])?.focus();
@@ -163,14 +158,7 @@ function ActivityDialogContent({
       initialFocusRef={titleRef}
     >
       <form noValidate onSubmit={handleSubmit} className="space-y-5 px-5 py-6 sm:px-7">
-        {errorSummary ? (
-          <div
-            role="alert"
-            className="rounded-2xl border border-rust-100 bg-rust-50 px-4 py-3 text-sm font-medium text-rust-700"
-          >
-            {errorSummary}
-          </div>
-        ) : null}
+        <FormErrorSummary message={errorSummary} />
 
         <div>
           <label htmlFor={fieldIds.title} className="field-label">
@@ -191,9 +179,7 @@ function ActivityDialogContent({
             className={`field-control mt-1.5 ${errors.title ? 'border-rust-600' : ''}`}
           />
           {errors.title ? (
-            <p id="activity-title-error" className="field-error mt-1.5">
-              {errors.title}
-            </p>
+            <FieldError id="activity-title-error">{errors.title}</FieldError>
           ) : null}
         </div>
 
@@ -213,9 +199,7 @@ function ActivityDialogContent({
               className={`field-control mt-1.5 ${errors.startsAt ? 'border-rust-600' : ''}`}
             />
             {errors.startsAt ? (
-              <p id="activity-starts-error" className="field-error mt-1.5">
-                {errors.startsAt}
-              </p>
+              <FieldError id="activity-starts-error">{errors.startsAt}</FieldError>
             ) : null}
           </div>
 
@@ -239,9 +223,7 @@ function ActivityDialogContent({
               The end must be later than the start.
             </p>
             {errors.endsAt ? (
-              <p id="activity-ends-error" className="field-error mt-1.5">
-                {errors.endsAt}
-              </p>
+              <FieldError id="activity-ends-error">{errors.endsAt}</FieldError>
             ) : null}
           </div>
         </div>
@@ -292,9 +274,7 @@ function ActivityDialogContent({
               className={`field-control mt-1.5 ${errors.location ? 'border-rust-600' : ''}`}
             />
             {errors.location ? (
-              <p id="activity-location-error" className="field-error mt-1.5">
-                {errors.location}
-              </p>
+              <FieldError id="activity-location-error">{errors.location}</FieldError>
             ) : null}
           </div>
         </div>
@@ -315,9 +295,7 @@ function ActivityDialogContent({
             className={`field-control mt-1.5 resize-y ${errors.description ? 'border-rust-600' : ''}`}
           />
           {errors.description ? (
-            <p id="activity-description-error" className="field-error mt-1.5">
-              {errors.description}
-            </p>
+            <FieldError id="activity-description-error">{errors.description}</FieldError>
           ) : null}
         </div>
 

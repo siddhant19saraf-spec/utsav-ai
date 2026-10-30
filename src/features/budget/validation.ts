@@ -73,6 +73,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+/**
+ * Reads a value that may have crossed an untrusted boundary. Unlike a type
+ * assertion, this keeps `unknown` honest: a non-object reads as an empty
+ * record, so field checks below see `undefined` instead of throwing.
+ */
+function asRecord(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
+}
+
 function isInrMoney(value: unknown): value is Money {
   return isValidMoney(value) && value.currency === 'INR';
 }
@@ -84,7 +93,7 @@ function inspectCategory(
   index: number,
 ): BudgetValidationIssue[] {
   const issues: BudgetValidationIssue[] = [];
-  const candidate = category as unknown as Record<string, unknown>;
+  const candidate = asRecord(category);
   const id = typeof candidate.id === 'string' ? candidate.id : '';
   const name = typeof candidate.name === 'string' ? candidate.name : '';
   const idOption = id ? { categoryId: id } : {};
@@ -212,7 +221,7 @@ export function validateBudgetCategories(
       issues.push(categoryIssue);
     }
 
-    const id = (category as unknown as Record<string, unknown>).id;
+    const id = asRecord(category).id;
 
     if (typeof id === 'string' && id) {
       if (seenIds.has(id)) {
@@ -243,7 +252,7 @@ export function toValidationResult(
 
 export function validateBudget(budget: EventBudget): BudgetValidationResult {
   const issues: BudgetValidationIssue[] = [];
-  const totalAvailable = (budget as unknown as Record<string, unknown>).totalAvailable;
+  const totalAvailable = asRecord(budget).totalAvailable;
 
   if (!isInrMoney(totalAvailable)) {
     issues.push(
@@ -265,7 +274,7 @@ export function validateBudget(budget: EventBudget): BudgetValidationResult {
 
   issues.push(...validateBudgetCategories(budget.categories));
 
-  const reserveTarget = (budget.emergencyReserve as unknown as Record<string, unknown>).target;
+  const reserveTarget = asRecord(budget.emergencyReserve).target;
 
   if (!isInrMoney(reserveTarget)) {
     issues.push(
@@ -301,8 +310,7 @@ export function validateBudget(budget: EventBudget): BudgetValidationResult {
         ),
       );
     } else {
-      const reserveFlexibility = (reserveCategory as unknown as Record<string, unknown>)
-        .flexibility;
+      const reserveFlexibility = asRecord(reserveCategory).flexibility;
 
       if (
         !isRecord(reserveFlexibility) ||
@@ -352,8 +360,9 @@ export function validateBudget(budget: EventBudget): BudgetValidationResult {
     let amountsAreSafe = true;
 
     for (const category of budget.categories) {
-      const planned = (category as unknown as Record<string, unknown>).planned;
-      const actual = (category as unknown as Record<string, unknown>).actual;
+      const categoryRecord = asRecord(category);
+      const planned = categoryRecord.planned;
+      const actual = categoryRecord.actual;
 
       if (!isInrMoney(planned) || !isInrMoney(actual)) {
         amountsAreSafe = false;
@@ -371,7 +380,7 @@ export function validateBudget(budget: EventBudget): BudgetValidationResult {
       plannedMinor = nextPlanned;
       actualMinor = nextActual;
 
-      const flexibility = (category as unknown as Record<string, unknown>).flexibility;
+      const flexibility = categoryRecord.flexibility;
 
       if (isRecord(flexibility) && flexibility.mode === 'protected') {
         protectedMinor += planned.amountMinor;

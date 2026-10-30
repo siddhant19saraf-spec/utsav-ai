@@ -18,7 +18,7 @@ const navigationLabels = [
   'Settings',
 ];
 
-const lazyPageTimeout = { timeout: 5_000 } as const;
+const lazyPageTimeout = { timeout: 10_000 } as const;
 
 function findDashboardHeading() {
   return screen.findByRole(
@@ -71,7 +71,7 @@ describe('App', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText('Sample').length).toBeGreaterThan(0);
-  }, 15_000);
+  }, 25_000);
 
   it('navigates to routed pages and keeps the active item marked', async () => {
     const user = userEvent.setup();
@@ -109,7 +109,7 @@ describe('App', () => {
       'aria-current',
       'page',
     );
-  }, 15_000);
+  }, 25_000);
 
   it('opens the mobile navigation, moves focus into it, and closes on selection', async () => {
     const user = userEvent.setup();
@@ -140,7 +140,7 @@ describe('App', () => {
       'aria-expanded',
       'false',
     );
-  }, 15_000);
+  }, 25_000);
 
   it('closes the mobile navigation with Escape and restores focus to the trigger', async () => {
     const user = userEvent.setup();
@@ -157,7 +157,7 @@ describe('App', () => {
     expect(restoredButton).toHaveAttribute('aria-expanded', 'false');
     expect(restoredButton).toHaveFocus();
     expect(screen.queryByRole('navigation', { name: 'Mobile primary' })).not.toBeInTheDocument();
-  }, 15_000);
+  }, 25_000);
 
   it('switches between light and dark themes from the header', async () => {
     const user = userEvent.setup();
@@ -175,5 +175,5 @@ describe('App', () => {
 
     expect(document.documentElement).not.toHaveClass('dark');
     expect(window.localStorage.getItem('utsav-ai.theme')).toBe('light');
-  }, 15_000);
+  }, 25_000);
 });

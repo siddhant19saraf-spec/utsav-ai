@@ -442,17 +442,17 @@ A shorter backup path for a live demo is included in [docs/DEMO_SCRIPT.md](docs/
 
 ## Testing and quality
 
-The required verification suite was last run on **2026-10-26** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
+The required verification suite was last run on **2026-10-27** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
 
 | Check | Command | Result |
 | --- | --- | --- |
 | Type check | `npm run typecheck` | **Passed** (`tsc -b`, exit 0) |
 | Lint | `npm run lint` | **Passed**, zero warnings (`--max-warnings=0`) |
-| Automated tests | `npm run test` | **529 tests passed across 52 test files** |
+| Automated tests | `npm run test` | **561 tests passed across 59 test files** |
 | Production build | `npm run build` | **Passed**; route-split JS chunks and CSS emitted |
 | Dependency audit | `npm audit` | **0 vulnerabilities** reported |
 
-Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 451.60 kB (132.57 kB gzip), the largest route chunk is 74.98 kB (18.53 kB gzip), and CSS is 57.26 kB (10.17 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
+Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 452.58 kB (132.90 kB gzip), the largest route chunk is 73.28 kB (18.34 kB gzip), and CSS is 57.16 kB (10.16 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
 
 What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, keyboard activation of the rescue analysis, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, lazy-route loading, error-boundary recovery, and the main UI flows with Testing Library.
 

@@ -8,6 +8,8 @@ import {
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '@/components/StatusBadge';
+import { FieldError } from '@/components/FieldError';
+import { formatCountLabel } from '@/lib/format';
 import {
   formatMinorForInput,
   formatMoney,
@@ -21,9 +23,6 @@ interface CateringEstimatorPanelProps {
   readonly event: CelebrationEvent;
 }
 
-function countLabel(value: number, singular: string, plural = `${singular}s`): string {
-  return `${new Intl.NumberFormat('en-IN').format(value)} ${value === 1 ? singular : plural}`;
-}
 
 export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
   const { workspace, saveCateringEstimate } = useWorkspace();
@@ -179,9 +178,7 @@ export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
               Whole rupees with up to two decimal places. Stored as integer paise.
             </p>
             {perPersonError ? (
-              <p id="catering-per-person-error" className="field-error mt-1.5">
-                {perPersonError}
-              </p>
+              <FieldError id="catering-per-person-error">{perPersonError}</FieldError>
             ) : null}
           </div>
 
@@ -212,9 +209,7 @@ export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
               Optional headcount cushion, 0–100%. Rounded up.
             </p>
             {bufferError ? (
-              <p id="catering-buffer-error" className="field-error mt-1.5">
-                {bufferError}
-              </p>
+              <FieldError id="catering-buffer-error">{bufferError}</FieldError>
             ) : null}
           </div>
 
@@ -246,7 +241,7 @@ export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
               <div>
                 <dt className="text-xs font-medium text-ink-muted">Attendees used</dt>
                 <dd className="mt-0.5 text-lg font-semibold text-ink tabular-nums">
-                  {countLabel(estimate.baseAttendees, 'guest')}
+                  {formatCountLabel(estimate.baseAttendees, 'guest')}
                 </dd>
                 <dd className="text-[0.6875rem] text-ink-soft">
                   {estimate.attendeeSource === 'confirmed'
@@ -257,7 +252,7 @@ export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
               <div>
                 <dt className="text-xs font-medium text-ink-muted">Buffer</dt>
                 <dd className="mt-0.5 text-lg font-semibold text-ink tabular-nums">
-                  {countLabel(estimate.bufferAttendees, 'guest')}
+                  {formatCountLabel(estimate.bufferAttendees, 'guest')}
                 </dd>
                 <dd className="text-[0.6875rem] text-ink-soft">
                   {estimate.bufferPercent}% cushion
@@ -266,7 +261,7 @@ export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
               <div>
                 <dt className="text-xs font-medium text-ink-muted">Total to cater</dt>
                 <dd className="mt-0.5 text-lg font-semibold text-ink tabular-nums">
-                  {countLabel(estimate.estimatedAttendees, 'guest')}
+                  {formatCountLabel(estimate.estimatedAttendees, 'guest')}
                 </dd>
                 <dd className="text-[0.6875rem] text-ink-soft">Estimate only</dd>
               </div>
@@ -289,7 +284,7 @@ export function CateringEstimatorPanel({ event }: CateringEstimatorPanelProps) {
 
             <p className="mt-3 text-xs leading-relaxed text-ink-muted">
               {estimate.attendeeSource === 'confirmed'
-                ? `${countLabel(estimate.counts.invited, 'guest record')} available: ${estimate.counts.confirmed} confirmed, ${estimate.counts.pending} pending, ${estimate.counts.declined} declined. Pending and declined guests are excluded from the base attendee count.`
+                ? `${formatCountLabel(estimate.counts.invited, 'guest record')} available: ${estimate.counts.confirmed} confirmed, ${estimate.counts.pending} pending, ${estimate.counts.declined} declined. Pending and declined guests are excluded from the base attendee count.`
                 : `No guest records exist for this event, so the saved expected guest count of ${event.expectedGuests} is used. Add guests to switch to confirmed attendance.`}
             </p>
 

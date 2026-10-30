@@ -1,7 +1,10 @@
 import { ListPlus, Save } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { ModalDialog } from '@/components/ModalDialog';
+import { FieldError } from '@/components/FieldError';
+import { FormErrorSummary } from '@/components/FormErrorSummary';
 import { formatEventDate } from '@/lib/date';
+import { clearFieldError, firstInvalidField } from '@/lib/formState';
 import type { CelebrationEvent, PlanningTask, TaskPriority } from '@/types/domain';
 import {
   defaultTaskDraft,
@@ -100,15 +103,7 @@ function TaskDialogContent({
 
   function updateField<K extends keyof TaskDraft>(field: K, value: TaskDraft[K]) {
     setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => {
-      if (!(field in current)) {
-        return current;
-      }
-
-      const next = { ...current };
-      delete next[field as TaskFormField];
-      return next;
-    });
+    setErrors((current) => clearFieldError(current, field));
     setErrorSummary('');
   }
 
@@ -125,7 +120,7 @@ function TaskDialogContent({
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setErrorSummary('Please fix the highlighted fields before saving the task.');
-      const firstInvalid = fieldOrder.find((field) => nextErrors[field]);
+      const firstInvalid = firstInvalidField(fieldOrder, nextErrors);
 
       if (firstInvalid) {
         document.getElementById(fieldIds[firstInvalid])?.focus();
@@ -150,14 +145,7 @@ function TaskDialogContent({
       initialFocusRef={titleRef}
     >
       <form noValidate onSubmit={handleSubmit} className="space-y-5 px-5 py-6 sm:px-7">
-        {errorSummary ? (
-          <div
-            role="alert"
-            className="rounded-2xl border border-rust-100 bg-rust-50 px-4 py-3 text-sm font-medium text-rust-700"
-          >
-            {errorSummary}
-          </div>
-        ) : null}
+        <FormErrorSummary message={errorSummary} />
 
         <div>
           <label htmlFor={fieldIds.title} className="field-label">
@@ -178,9 +166,7 @@ function TaskDialogContent({
             className={`field-control mt-1.5 ${errors.title ? 'border-rust-600' : ''}`}
           />
           {errors.title ? (
-            <p id="task-title-error" className="field-error mt-1.5">
-              {errors.title}
-            </p>
+            <FieldError id="task-title-error">{errors.title}</FieldError>
           ) : null}
         </div>
 
@@ -200,9 +186,7 @@ function TaskDialogContent({
               className={`field-control mt-1.5 ${errors.dueDate ? 'border-rust-600' : ''}`}
             />
             {errors.dueDate ? (
-              <p id="task-due-error" className="field-error mt-1.5">
-                {errors.dueDate}
-              </p>
+              <FieldError id="task-due-error">{errors.dueDate}</FieldError>
             ) : null}
           </div>
 
@@ -252,9 +236,7 @@ function TaskDialogContent({
             className={`field-control mt-1.5 ${errors.assignee ? 'border-rust-600' : ''}`}
           />
           {errors.assignee ? (
-            <p id="task-assignee-error" className="field-error mt-1.5">
-              {errors.assignee}
-            </p>
+            <FieldError id="task-assignee-error">{errors.assignee}</FieldError>
           ) : null}
         </div>
 
@@ -274,9 +256,7 @@ function TaskDialogContent({
             className={`field-control mt-1.5 resize-y ${errors.description ? 'border-rust-600' : ''}`}
           />
           {errors.description ? (
-            <p id="task-description-error" className="field-error mt-1.5">
-              {errors.description}
-            </p>
+            <FieldError id="task-description-error">{errors.description}</FieldError>
           ) : null}
         </div>
 

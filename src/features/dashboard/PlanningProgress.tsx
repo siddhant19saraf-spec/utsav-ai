@@ -110,7 +110,7 @@ export function PlanningProgress({
       <p className="mt-4 border-t border-line pt-4 text-xs leading-relaxed text-ink-muted">
         {total > 0
           ? 'Progress updates immediately when you mark a task complete on this dashboard.'
-          : 'Task planning will expand with the Timeline module. Sample events include a few tasks to preview this view.'}
+          : 'No tasks are linked to this focus yet. Add preparation tasks on the Timeline to track completion here.'}
       </p>
     </section>
   );

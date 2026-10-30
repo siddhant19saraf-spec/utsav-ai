@@ -1,5 +1,19 @@
 const LOCAL_DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
+const activityDateTimeFormatter = new Intl.DateTimeFormat('en-IN', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
+const activityTimeFormatter = new Intl.DateTimeFormat('en-IN', {
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
 function parseParts(value: string): {
   year: number;
   month: number;
@@ -71,14 +85,7 @@ export function formatActivityDateTime(value: string): string {
     return value;
   }
 
-  return new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
+  return activityDateTimeFormatter.format(date);
 }
 
 export function formatActivityTime(value: string): string {
@@ -88,27 +95,9 @@ export function formatActivityTime(value: string): string {
     return value;
   }
 
-  return new Intl.DateTimeFormat('en-IN', {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
+  return activityTimeFormatter.format(date);
 }
 
 export function localDateTimeDatePart(value: string): string {
   return value.slice(0, 10);
-}
-
-export function compareLocalDateTime(first: string, second: string): number {
-  return first.localeCompare(second);
-}
-
-export function addMinutesToLocalDateTime(value: string, minutes: number): string {
-  const date = parseLocalDateTime(value);
-
-  if (!date) {
-    return value;
-  }
-
-  date.setMinutes(date.getMinutes() + minutes);
-  return toLocalDateTime(date);
 }

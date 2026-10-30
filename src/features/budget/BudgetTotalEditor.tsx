@@ -1,5 +1,6 @@
 import { Save, Wallet } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
+import { FieldError } from '@/components/FieldError';
 import { formatMinorForInput, formatMoney } from '@/lib/money';
 import type { Money } from '@/types/domain';
 import { parseBudgetAmountInput } from './budgetForm';
@@ -81,9 +82,7 @@ export function BudgetTotalEditor({ totalAvailable, onSave }: BudgetTotalEditorP
           resulting overrun.
         </p>
         {error ? (
-          <p id={errorId} className="field-error mt-1.5">
-            {error}
-          </p>
+          <FieldError id={errorId}>{error}</FieldError>
         ) : null}
         <button type="submit" className="btn-secondary mt-3 w-full">
           <Save className="size-4" aria-hidden="true" />

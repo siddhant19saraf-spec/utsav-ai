@@ -1,5 +1,6 @@
 import { MAX_BUDGET_AMOUNT_MINOR } from '@/features/budget/budgetConstants';
 import { isValidIsoDate } from '@/lib/date';
+import { formatCount } from '@/lib/format';
 import { formatMinorForInput, formatMoney, parseRupeesToMinor } from '@/lib/money';
 import type { CelebrationEvent, EventSetting } from '@/types/domain';
 import type { RescueRequest } from './rescueTypes';
@@ -26,6 +27,19 @@ export interface RescueFormValues {
 }
 
 export type RescueFormErrors = Readonly<Record<string, string>>;
+
+export const rescueFieldIds = {
+  startsAt: 'rescue-date',
+  expectedGuests: 'rescue-guests',
+  totalBudget: 'rescue-total',
+  setting: 'rescue-setting',
+  theme: 'rescue-theme',
+  protected: 'rescue-protected',
+} as const;
+
+export function rescueMinimumFieldId(categoryId: string): string {
+  return `rescue-minimum-${categoryId}`;
+}
 
 export type RescueFormResult =
   | { readonly ok: true; readonly request: RescueRequest }
@@ -118,7 +132,7 @@ export function createRescueRequestFromForm(
       guests < 1 ||
       guests > MAX_RESCUE_GUESTS
     ) {
-      errors.expectedGuests = `Enter between 1 and ${new Intl.NumberFormat('en-IN').format(MAX_RESCUE_GUESTS)} guests.`;
+      errors.expectedGuests = `Enter between 1 and ${formatCount(MAX_RESCUE_GUESTS)} guests.`;
     }
   }
 

@@ -1,5 +1,8 @@
 import { Plus, Save, ShieldCheck, SlidersHorizontal, X } from 'lucide-react';
 import { useId, useRef, useState, type FormEvent } from 'react';
+import { FieldError } from '@/components/FieldError';
+import { FormErrorSummary } from '@/components/FormErrorSummary';
+import { clearFieldError, firstInvalidField } from '@/lib/formState';
 import type { BudgetCategory } from '@/types/budget';
 import { BUDGET_CATEGORY_TEMPLATES } from './budgetConstants';
 import {
@@ -57,15 +60,7 @@ export function BudgetCategoryForm({
     value: BudgetCategoryFormValues[K],
   ) {
     setValues((current) => ({ ...current, [field]: value }));
-    setErrors((current) => {
-      if (!current[field]) {
-        return current;
-      }
-
-      const nextErrors = { ...current };
-      delete nextErrors[field];
-      return nextErrors;
-    });
+    setErrors((current) => clearFieldError(current, field));
     setErrorSummary('');
   }
 
@@ -81,12 +76,10 @@ export function BudgetCategoryForm({
     if (!result.ok) {
       setErrors(result.errors);
       setErrorSummary('Please fix the highlighted fields before saving this category.');
-      const firstInvalidField = BUDGET_CATEGORY_FIELD_ORDER.find(
-        (field) => result.errors[field],
-      );
+      const firstInvalid = firstInvalidField(BUDGET_CATEGORY_FIELD_ORDER, result.errors);
 
-      if (firstInvalidField) {
-        document.getElementById(fieldIds[firstInvalidField])?.focus();
+      if (firstInvalid) {
+        document.getElementById(fieldIds[firstInvalid])?.focus();
       }
 
       return;
@@ -121,14 +114,7 @@ export function BudgetCategoryForm({
         </button>
       </div>
 
-      {errorSummary ? (
-        <div
-          role="alert"
-          className="mt-4 rounded-xl border border-rust-100 bg-rust-50 px-3.5 py-2.5 text-sm font-medium text-rust-700"
-        >
-          {errorSummary}
-        </div>
-      ) : null}
+      <FormErrorSummary message={errorSummary} className="mt-4" />
 
       <div className="mt-4 space-y-4">
         <div>
@@ -156,9 +142,7 @@ export function BudgetCategoryForm({
             ))}
           </datalist>
           {errors.name ? (
-            <p id={errorIds.name} className="field-error mt-1.5">
-              {errors.name}
-            </p>
+            <FieldError id={errorIds.name}>{errors.name}</FieldError>
           ) : null}
         </div>
 
@@ -189,9 +173,7 @@ export function BudgetCategoryForm({
               />
             </div>
             {errors.planned ? (
-              <p id={errorIds.planned} className="field-error mt-1.5">
-                {errors.planned}
-              </p>
+              <FieldError id={errorIds.planned}>{errors.planned}</FieldError>
             ) : null}
           </div>
 
@@ -221,9 +203,7 @@ export function BudgetCategoryForm({
               />
             </div>
             {errors.actual ? (
-              <p id={errorIds.actual} className="field-error mt-1.5">
-                {errors.actual}
-              </p>
+              <FieldError id={errorIds.actual}>{errors.actual}</FieldError>
             ) : null}
           </div>
         </div>
@@ -251,9 +231,7 @@ export function BudgetCategoryForm({
               <option value="protected">Protected — never reduced by repair</option>
             </select>
             {errors.protection ? (
-              <p id={errorIds.protection} className="field-error mt-1.5">
-                {errors.protection}
-              </p>
+              <FieldError id={errorIds.protection}>{errors.protection}</FieldError>
             ) : null}
           </div>
 
@@ -284,9 +262,7 @@ export function BudgetCategoryForm({
                 />
               </div>
               {errors.minimum ? (
-                <p id={errorIds.minimum} className="field-error mt-1.5">
-                  {errors.minimum}
-                </p>
+                <FieldError id={errorIds.minimum}>{errors.minimum}</FieldError>
               ) : null}
             </div>
           ) : (
@@ -326,9 +302,7 @@ export function BudgetCategoryForm({
             className={`field-control mt-1.5 resize-y ${errors.notes ? 'border-rust-600' : ''}`}
           />
           {errors.notes ? (
-            <p id={errorIds.notes} className="field-error mt-1.5">
-              {errors.notes}
-            </p>
+            <FieldError id={errorIds.notes}>{errors.notes}</FieldError>
           ) : null}
         </div>
       </div>

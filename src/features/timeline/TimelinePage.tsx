@@ -13,11 +13,12 @@ import {
   Users,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
+import { SelectedEventCard } from '@/components/SelectedEventCard';
 import { StatusBadge } from '@/components/StatusBadge';
-import { formatEventDate, toIsoDate } from '@/lib/date';
+import { toIsoDate } from '@/lib/date';
 import {
   formatActivityDateTime,
   formatActivityTime,
@@ -29,6 +30,7 @@ import type {
   CelebrationEvent,
   TimelineActivity,
 } from '@/types/domain';
+import { useSelectedEvent } from '@/features/events/useSelectedEvent';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { TaskManager } from '@/features/tasks/TaskManager';
 import { ActivityDialog } from './ActivityDialog';
@@ -58,19 +60,8 @@ function priorityTone(priority: ActivityPriority): 'neutral' | 'warning' | 'dang
 
 export function TimelinePage() {
   const { workspace } = useWorkspace();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedEventId = searchParams.get('event');
-  const selectedEvent =
-    workspace.events.find((event) => event.id === requestedEventId) ??
-    workspace.events[0] ??
-    null;
+  const { selectedEvent, handleEventChange } = useSelectedEvent();
   const todayIso = toIsoDate(new Date());
-
-  function handleEventChange(eventId: string) {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('event', eventId);
-    setSearchParams(nextParams, { replace: true });
-  }
 
   return (
     <div className="space-y-7">
@@ -108,62 +99,26 @@ export function TimelinePage() {
         />
       ) : (
         <>
-          <section
-            aria-labelledby="timeline-event-heading"
-            className="surface-card flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6"
+          <SelectedEventCard
+            headingId="timeline-event-heading"
+            eyebrow="Selected event"
+            event={selectedEvent}
+            events={workspace.events}
+            selectId="timeline-event"
+            selectLabel="Event"
+            selectHint="Switching events never mixes activities or tasks."
+            onEventChange={handleEventChange}
           >
-            <div className="min-w-0">
-              <p className="eyebrow">Selected event</p>
-              <h2
-                id="timeline-event-heading"
-                className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink"
-              >
-                {selectedEvent.name}
-              </h2>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-muted">
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays className="size-3.5 text-gold-600" aria-hidden="true" />
-                  <time dateTime={selectedEvent.startsAt}>
-                    {formatEventDate(selectedEvent.startsAt)}
-                  </time>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Users className="size-3.5 text-gold-600" aria-hidden="true" />
-                  {selectedEvent.expectedGuests} expected guests
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ListChecks className="size-3.5 text-gold-600" aria-hidden="true" />
-                  {
-                    workspace.activities.filter(
-                      (activity) => activity.eventId === selectedEvent.id,
-                    ).length
-                  }{' '}
-                  activities
-                </span>
-              </div>
-            </div>
-
-            <div className="w-full sm:w-72">
-              <label htmlFor="timeline-event" className="field-label">
-                Event
-              </label>
-              <select
-                id="timeline-event"
-                value={selectedEvent.id}
-                onChange={(changeEvent) => handleEventChange(changeEvent.target.value)}
-                className="field-control mt-1.5"
-              >
-                {workspace.events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.name}
-                  </option>
-                ))}
-              </select>
-              <p className="field-hint mt-1.5">
-                Switching events never mixes activities or tasks.
-              </p>
-            </div>
-          </section>
+            <span className="flex items-center gap-1.5">
+              <ListChecks className="size-3.5 text-gold-600" aria-hidden="true" />
+              {
+                workspace.activities.filter(
+                  (activity) => activity.eventId === selectedEvent.id,
+                ).length
+              }{' '}
+              activities
+            </span>
+          </SelectedEventCard>
 
           <ActivityManager
             key={selectedEvent.id}

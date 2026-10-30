@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { formatMoney, rupees } from '@/lib/money';
 import { makeBudget, makeCategory, makeEvent, makeWorkspace } from '@/test/fixtures';
 import { WorkspaceProvider } from './WorkspaceProvider';
@@ -76,6 +76,52 @@ describe('WorkspaceProvider persistence', () => {
       expect(parsed.workspace.events[0]?.budget.categories).toEqual([
         makeCategory({ id: 'venue', planned: rupees(100) }),
       ]);
+    }
+  });
+
+  it('keeps an edit in memory and reports save-failed when storage rejects the write', async () => {
+    const user = userEvent.setup();
+    const event = makeEvent({
+      id: 'wedding',
+      budget: makeBudget({
+        eventId: 'wedding',
+        totalAvailable: rupees(1_000),
+        categories: [makeCategory({ id: 'venue', planned: rupees(100) })],
+      }),
+    });
+
+    expect(
+      saveWorkspaceToStorage(makeWorkspace({ events: [event] })),
+    ).toEqual({ ok: true });
+
+    render(
+      <WorkspaceProvider>
+        <BudgetProbe />
+      </WorkspaceProvider>,
+    );
+
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    });
+
+    try {
+      await user.click(screen.getByRole('button', { name: 'Raise total' }));
+    } finally {
+      setItem.mockRestore();
+    }
+
+    expect(screen.getByTestId('total')).toHaveTextContent('₹2,000');
+    expect(screen.getByTestId('persistence')).toHaveTextContent('save-failed');
+    expect(screen.getByTestId('message')).toHaveTextContent(/local storage is full/i);
+
+    const parsed = parseStoredWorkspace(
+      window.localStorage.getItem(WORKSPACE_STORAGE_KEY) ?? '',
+    );
+
+    expect(parsed.ok).toBe(true);
+
+    if (parsed.ok) {
+      expect(parsed.workspace.events[0]?.budget.totalAvailable).toEqual(rupees(1_000));
     }
   });
 
