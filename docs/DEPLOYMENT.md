@@ -1,6 +1,6 @@
 # UTSAV AI — Deployment Guide
 
-**Status:** a **public static demo is live** at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. The optional single-service Node API is prepared and verified locally but **is not deployed**. This guide records the live static deployment first, then the prepared Node/Render alternative.
+**Status:** two deployments are live. A **public static demo** is at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)** (Qoder Sites, SPA only). A **full app (frontend + Node API) is live on Render** at **[https://utsav-ai-qfcn.onrender.com](https://utsav-ai-qfcn.onrender.com)**; the same-origin API is served there, and the AI Planner is currently **not configured** until `AI_PROVIDER_API_KEY` and `AI_MODEL` are set in the Render environment. This guide records both deployments and the deployment procedure.
 
 ## Current deployment
 
@@ -30,6 +30,28 @@ Observed limits:
 - The host adds a visible Qoder attribution watermark with a hide control.
 - Browser data is scoped to this origin. Changing the address or origin does not migrate an existing workspace.
 - Updates are published from the same project and preserve the public address; source changes require a new build and publication.
+
+## Render deployment (full app, live)
+
+| Item | Value |
+| --- | --- |
+| Host | Render Web Service (free tier, Blueprint) |
+| URL | `https://utsav-ai-qfcn.onrender.com` |
+| Served content | The built SPA from `dist/` **and** the Node API on the same origin |
+| Backend | `GET /api/health`, `GET /api/ai/status`, `POST /api/ai/plan` |
+| Data | Browser `localStorage` per origin; no accounts, server database, or sync |
+| AI | Not configured until `AI_PROVIDER_API_KEY` + `AI_MODEL` are set in the service Environment |
+
+Verified on 2026-11-01 against the live Render URL:
+
+- `GET /api/health` returned `200` `{"status":"ok"}` with `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, and an `X-Request-Id`.
+- `GET /api/ai/status` returned `200` with `configured: false` and the documented limits.
+- `POST /api/ai/plan` returned the safe `503` `not-configured` envelope with a request ID; a real provider request was **not** attempted because credentials are absent.
+- The homepage, `/rescue`, `/assistant`, and `/diagnostics` returned `200` with `text/html` (SPA fallback), and a missing asset returned `404`.
+- In a browser, the dashboard, AI Planner, and Diagnostics pages all rendered with no console errors; Diagnostics reported **API server Operational**, **AI provider Configuration Required**, and no captured errors.
+- Deep-link navigation (e.g. `/assistant`, `/diagnostics`) rendered correctly, served by the Node server's own SPA fallback rather than a platform workaround.
+
+The free tier sleeps after inactivity; the first request after idle can be slow. Browser data is scoped to this origin and is separate from the Qoder demo origin.
 
 ## 1. Hosting architecture (prepared Node/Render alternative)
 
