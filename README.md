@@ -18,7 +18,7 @@ Built for **PromptWars Virtual — Challenge 5** · Category: **Intelligent cele
 
 </div>
 
-> **Project status:** local-first hackathon prototype with a **live public static demo** at **[utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. Core planning works entirely in the browser. The hosted build serves the same SPA and browser-local workspace, but it does **not** host the optional Node AI proxy: the AI Planner reports **Unavailable** and the deterministic, clearly labelled local outline remains available. There is no account system, server database, or cloud sync. A single-service Node/Render configuration remains prepared but is not deployed. The current source also includes a **Diagnostics** page for observed service status and safe in-tab failure summaries; the published static build predates that page. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+> **Project status:** local-first hackathon prototype with two live deployments. The **full app (frontend + Node API)** is live on Render at **[utsav-ai-qfcn.onrender.com](https://utsav-ai-qfcn.onrender.com)**: same-origin `/api` works and the AI Planner reports **Not configured** until `AI_PROVIDER_API_KEY` and `AI_MODEL` are set. A **static demo** (SPA only) is live at **[utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**, where the AI Planner reports **Unavailable**. Core planning works entirely in the browser; there is no account system, server database, or cloud sync. The source includes a **Diagnostics** page for observed service status and safe in-tab failure summaries; it is live on the Render deployment (the Qoder static demo predates it). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 <div align="center">
   <a href="docs/screenshots/dashboard.png">
@@ -177,12 +177,12 @@ Statuses are based on source inspection and the test suite available in this rep
 | Sample workspace | **Implemented and verified** | Clearly labelled sample events with remove and restore controls; user records preserved. |
 | AI deterministic outline | **Implemented and verified** | Always available, derived from saved data, labelled **Not AI-generated**, no invented prices or bookings. |
 | AI provider suggestions | **Requires external configuration** | Implemented and covered by automated tests with a mocked provider. A real provider call requires a running API server, a real key, and a compatible model; no live-provider run is verified in this repository. |
-| Production static serving | **Implemented and verified locally** | The Node server can serve the built SPA with `/api` on the same origin, SPA fallback, cache headers, and `/api/health`. Verified against a local production build; the Node service itself is not hosted. |
+| Production static serving | **Implemented and verified live** | The Node server serves the built SPA with `/api` on the same origin, SPA fallback, cache headers, and `/api/health`. Verified against a local production build and on the live Render service. |
 | Hosted static demo | **Live and verified** | The production `dist/` build is published publicly over HTTPS by Qoder Sites with SPA fallback. Verified: homepage, direct `/rescue`, `/budget`, and `/assistant` loads, asset delivery, Event Rescue analysis, deterministic outline, and browser-local task persistence across reload. The Node `/api` endpoints are not hosted there; the AI Planner shows **Unavailable**, not a fabricated response. The published build predates the Diagnostics page. |
-| Deployment configuration | **Static demo live; Node/Render prepared** | Qoder Sites publishes the static build. `render.yaml`, `.node-version`, `npm start`, environment documentation, and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) remain available for the optional full Node service with `/api`; no Render service has been created. |
+| Hosted full app (Render) | **Live and verified** | The full app (built SPA + Node `/api`) is deployed on Render at `utsav-ai-qfcn.onrender.com`. Verified on 2026-11-01: `/api/health` → `200 {"status":"ok"}`, `/api/ai/status` → `configured: false`, safe `503 not-configured` on `/api/ai/plan`, SPA deep links (`/assistant`, `/diagnostics`, `/rescue`) → `200`, and the dashboard, AI Planner, and Diagnostics pages render with no console errors. AI is **not configured** until `AI_PROVIDER_API_KEY` + `AI_MODEL` are set in the service environment. |
 | Responsive layout and keyboard access | **Implemented but not fully verified** | Responsive layouts and mobile navigation focus behavior are implemented; automated tests cover main navigation and dialogs. Physical devices, all viewport combinations, and screen readers are not exhaustively verified. |
 | App shell resilience | **Implemented and verified** | Feature pages load in separate chunks with a shell-preserving, status-announced loading fallback. A top-level error boundary catches render or chunk-load failures, focuses a safe recovery heading, never shows the raw error detail, records a diagnostic reference ID, and offers retry and reload. Evidence: `AppErrorBoundary.test.tsx` (2 tests), `PageLoading.test.tsx` (1 test), `App.test.tsx`; production-browser checks confirmed all routes, a throttled initial load, a forced chunk failure, and reload recovery. |
-| System diagnostics | **Implemented and verified by tests** | Dedicated `/diagnostics` route with observed application, persistence, API, and AI-configuration status; global error and rejection capture; stable reference IDs; deduplicated bounded in-tab log; last successful operation; no telemetry. | `DiagnosticsPage.test.tsx`, `diagnosticsStore.test.ts`, `globalDiagnostics.test.ts`, and `serviceStatus.test.ts` (37 tests); storage, AI-provider, and render failure paths assert their diagnostic entries. No committed browser E2E suite covers the page, and the published static build predates it. |
+| System diagnostics | **Implemented and verified by tests** | Dedicated `/diagnostics` route with observed application, persistence, API, and AI-configuration status; global error and rejection capture; stable reference IDs; deduplicated bounded in-tab log; last successful operation; no telemetry. | `DiagnosticsPage.test.tsx`, `diagnosticsStore.test.ts`, `globalDiagnostics.test.ts`, and `serviceStatus.test.ts` (37 tests); storage, AI-provider, and render failure paths assert their diagnostic entries. No committed browser E2E suite covers the page, and the Qoder static demo predates it (the Render deployment includes it). |
 | Event deletion | **Implemented and verified** | Explicit confirmation with the affected record counts; removes the event, budget, tasks, guests, activities, catering estimate, risk findings, and rescue-proposal snapshots scoped to that event. Other events are untouched. No undo; export remains the recovery path. |
 | Hosted database, accounts, cloud sync | **Not implemented** | The app is single-user and browser-local; there is no server database or sign-in. |
 | Live vendor prices, bookings, availability, weather | **Not implemented** | No vendor, calendar, payment, or weather integration exists. |
@@ -396,7 +396,7 @@ No real credential, provider body, prompt, or guest data is logged or displayed 
 
 ## Deployment
 
-**Status: a public static demo is live; the optional Node service is prepared but not deployed.**
+**Status: the full app (frontend + Node API) is live on Render at [utsav-ai-qfcn.onrender.com](https://utsav-ai-qfcn.onrender.com); a static SPA demo is live at [utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website). AI is not configured until provider credentials are set.**
 
 ### Live static deployment
 
@@ -409,9 +409,9 @@ The production `dist/` build is published by **Qoder Sites** at **[utsav-ai-9evw
 
 This deployment does **not** include the Node server: `/api/ai/*`, `/api/health`, a server database, accounts, and cloud sync are absent. The workspace remains browser `localStorage`, scoped to this origin. The host adds a visible Qoder attribution watermark with a hide control; it is platform presentation, not part of the application. AI generation remains disabled until a server-side provider is deployed and configured.
 
-### Optional Node service (prepared, not deployed)
+### Render full app (frontend + Node API, deployed)
 
-The included configuration targets a **single same-origin Node web service** (a Render Blueprint is provided in [render.yaml](render.yaml)). The service builds the Vite app, then serves `dist/` and `/api` from one process. This matches the application's actual shape:
+The full app is deployed as **one same-origin Node web service** on Render (see [render.yaml](render.yaml)), live at **[utsav-ai-qfcn.onrender.com](https://utsav-ai-qfcn.onrender.com)**. The service builds the Vite app, then serves `dist/` and `/api` from one process. This matches the application's actual shape:
 
 - The core planner is a static SPA with browser `localStorage`; it needs no server or database.
 - The only backend is an optional stateless AI proxy that already expects same-origin `/api` calls.
@@ -432,7 +432,7 @@ Key files and settings:
 
 Set AI provider variables only in the hosting platform's secret environment settings, never in committed files. Without them, the app remains fully usable: the AI status reports **Not configured** and the deterministic outline stays available.
 
-Detailed instructions, smoke tests, troubleshooting, and limitations are in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. The Render/Node path in that guide has not been performed; the live deployment is the separate static Qoder Sites build described above.
+Detailed instructions, smoke tests, troubleshooting, and limitations are in **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. The Render service is live and verified; the Qoder Sites build described above is a separate static-only demo.
 
 ## Example workflow
 
@@ -450,17 +450,17 @@ A shorter backup path for a live demo is included in [docs/DEMO_SCRIPT.md](docs/
 
 ## Testing and quality
 
-The required verification suite was last run on **2026-10-31** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
+The required verification suite was last run on **2026-11-01** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
 
 | Check | Command | Result |
 | --- | --- | --- |
 | Type check | `npm run typecheck` | **Passed** (`tsc -b`, exit 0) |
 | Lint | `npm run lint` | **Passed**, zero warnings (`--max-warnings=0`) |
-| Automated tests | `npm run test` | **603 tests passed across 63 test files** |
+| Automated tests | `npm run test` | **606 tests passed across 65 test files** |
 | Production build | `npm run build` | **Passed**; route-split JS chunks and CSS emitted |
 | Dependency audit | `npm audit` / `npm audit --omit=dev` | **0 production vulnerabilities**. The full audit reports 12 **moderate dev-only** advisories in the ESLint → `minimatch` toolchain; no non-breaking upstream fix is published, and no runtime dependency is affected. |
 
-Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 459.87 kB (134.97 kB gzip), the largest route chunk is 73.28 kB (18.35 kB gzip), and CSS is 57.36 kB (10.19 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
+Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 459.87 kB (134.96 kB gzip), the largest route chunk is 73.28 kB (18.35 kB gzip), and CSS is 57.36 kB (10.19 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
 
 What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, keyboard activation of the rescue analysis, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, lazy-route loading, error-boundary recovery, and the main UI flows with Testing Library.
 
@@ -498,7 +498,7 @@ Limitations of the current verification:
 - The server is a stateless provider proxy. It does not log prompts, provider response bodies, keys, guest data, or stack traces to its request log. It does log safe request metadata: route, method, status, duration, and request ID.
 - The server uses one bounded provider attempt with a timeout and output-token cap, a request-body limit, a per-client in-memory fixed-window rate limit, JSON-only API endpoints, `Cache-Control: no-store` on API responses, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and `X-Frame-Options: DENY` on API and static responses. It does not grant CORS access. It binds to loopback by default and must be configured to `0.0.0.0` on a hosting platform.
 - The rate limiter is in-memory and resets when the server restarts. It is not shared across instances, so the prepared deployment assumes one instance.
-- The live static deployment has no application authentication, so anyone with the URL can use the workspace in their own browser. It hosts no AI proxy, so no AI request can be triggered there. If the Node service is later deployed with provider credentials, add access control or a spending limit before sharing it widely; without credentials, no AI request can be made.
+- Neither live deployment has application authentication, so anyone with the URL can use the workspace in their own browser. The Render deployment hosts the Node API but has no provider credentials, so no AI request can be made there. If provider credentials are added, add access control or a spending limit before sharing the service widely.
 
 ### Validation and approval
 
@@ -511,9 +511,9 @@ Limitations of the current verification:
 
 - **No Content-Security-Policy (CSP) is configured** in the repository or the server's static/API headers. The app does not claim one, and the observed Qoder Sites response headers did not include a CSP or `X-Frame-Options`.
 - There is no authentication, authorization, multi-user isolation, or encrypted storage because this is a single-user prototype.
-- The live static site is served over platform-managed HTTPS. The Node API server has no TLS termination of its own and is not deployed; do not expose the raw Node process publicly without TLS.
+- Both live deployments are served over platform-managed HTTPS (Qoder Sites and Render). The Node process itself has no TLS termination of its own; do not expose the raw Node process publicly without TLS.
 - Automated tests cover many validation and approval paths but are not a comprehensive security audit or a production penetration test.
-- The live static host was checked for basic HTTPS responses and browser behavior, but its network controls, header policy, and operational monitoring were not independently audited. The Node API boundary is not hosted.
+- The live hosts were checked for basic HTTPS responses and browser behavior, but their network controls, header policy, and operational monitoring were not independently audited. The Node API boundary is hosted on Render and was smoke-tested live (health, status, and the safe not-configured path).
 
 ## Limitations and future improvements
 
@@ -531,8 +531,8 @@ Limitations of the current verification:
 - The repository includes no committed browser E2E suite or demo video; screenshots are static captures of the running app. CI covers type checking, linting, tests, and the build, but not browser E2E or deployment.
 - Diagnostics are held in memory for the current tab. Reloading, clearing the log, or closing the tab removes them; there is no telemetry upload, remote log, cross-tab history, or server-side diagnosis store.
 - The AI provider card reports server-side configuration, not live model availability. A configured provider is deliberately not probed from the page, so it is never labelled **Operational**.
-- The public deployment is static only. The Render Blueprint and Node production server were verified only locally; `/api`, server-side AI, and `/api/health` are not hosted, and the live site remains browser-local with no accounts or sync.
-- The published static demo was built before the Diagnostics page was added, so `/diagnostics` is not available on that deployment until a future rebuild and publish. The current source and local build include it.
+- The Render deployment serves `/api` and `/api/health` live, but server-side AI is present without credentials (the planner reports **Not configured**). The workspace remains browser-local with no accounts or sync, and the Qoder demo is static only.
+- The Qoder static demo was built before the Diagnostics page was added, so `/diagnostics` is not available there until a future rebuild and publish. The Render deployment and the current source include it.
 
 ### Planned improvements
 
@@ -545,7 +545,7 @@ These are **not implemented** and should not be read as commitments or current b
 - Calendar export, invitation workflows, and integration adapters for real vendor availability where an authoritative source exists.
 - Further accessibility validation with screen readers and physical devices.
 - A committed browser E2E suite and automated performance and accessibility regression checks.
-- A Node/API deployment of the optional provider proxy with verified HTTPS, headers, and post-deploy smoke tests, if the owner authorizes it and supplies credentials.
+- Enabling real AI on the deployed Node service: owner-supplied provider credentials and a live provider smoke test.
 - A governance and licensing decision suitable for public reuse.
 
 ## Documentation
@@ -554,7 +554,7 @@ These are **not implemented** and should not be read as commitments or current b
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — module responsibilities, data model, persistence flow, budget and risk engines, Event Rescue approval, AI validation, error handling, and security boundaries.
 - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — a realistic three-to-four-minute competition demo script with exact sample values, expected results, a backup path, privacy warnings, and a recording checklist.
 - [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md) — detailed per-feature status, evidence, scope, and known gaps.
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — the live static Qoder Sites deployment, its verified checks and limits, the prepared single-service Node/Render alternative, environment variables, smoke tests, and troubleshooting.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — the live Qoder Sites static demo and the live Render full app, verified checks and limits, environment variables, smoke tests, and troubleshooting.
 - [CHANGELOG.md](CHANGELOG.md) — notable changes, the current source snapshot, and known limitations.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — development setup, deterministic and privacy boundaries, required checks, and pull request expectations.
 - [SECURITY.md](SECURITY.md) — private vulnerability reporting, supported source, scope, and security-relevant design notes.
