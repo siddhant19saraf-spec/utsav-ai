@@ -1,4 +1,5 @@
 import {
+  Activity,
   CalendarDays,
   LayoutDashboard,
   LifeBuoy,
@@ -44,6 +45,13 @@ export const navigationSections: readonly NavigationSection[] = [
   },
 ];
 
+export const diagnosticsNavigationItem: NavigationItem = {
+  label: 'Diagnostics',
+  to: '/diagnostics',
+  icon: Activity,
+  end: false,
+};
+
 export const settingsNavigationItem: NavigationItem = {
   label: 'Settings',
   to: '/settings',
@@ -53,5 +61,6 @@ export const settingsNavigationItem: NavigationItem = {
 
 export const allNavigationItems: readonly NavigationItem[] = [
   ...navigationSections.flatMap((section) => section.items),
+  diagnosticsNavigationItem,
   settingsNavigationItem,
 ];

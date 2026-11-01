@@ -82,7 +82,7 @@ function sendJson(
   body: unknown,
   extraHeaders: Readonly<Record<string, string>> = {},
 ): void {
-  if (response.headersSent || response.writableEnded) {
+  if (response.headersSent || response.writableEnded || response.destroyed) {
     return;
   }
 
@@ -176,6 +176,10 @@ function readJsonBody(
     });
 
     request.on('error', () => finish({ ok: false, reason: 'unreadable' }));
+    // A client disconnect or the handler's slow-upload timeout destroys the
+    // request without emitting 'end' or 'error'. Settling on 'close' keeps the
+    // body read bounded so the handler never waits on a connection that is gone.
+    request.on('close', () => finish({ ok: false, reason: 'unreadable' }));
   });
 }
 

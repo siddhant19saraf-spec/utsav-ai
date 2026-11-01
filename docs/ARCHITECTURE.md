@@ -17,7 +17,7 @@ There is no account system, server-side data store, database, job queue, backgro
 ```mermaid
 flowchart LR
     subgraph Browser["Browser — local-first core"]
-        UI["React feature pages<br/>Overview · Events · Budget · Rescue · Timeline · Guests · Risks · AI Planner · Settings"]
+        UI["React feature pages<br/>Overview · Events · Budget · Rescue · Timeline · Guests · Risks · AI Planner · Diagnostics · Settings"]
         WP["WorkspaceProvider<br/>state · commit · persistence · approvals"]
         RULES["Pure domain modules<br/>budget · rescue · risks · timeline · tasks · guests · catering"]
         LS[("localStorage<br/>workspace v2<br/>+ recovery copy")]
@@ -44,7 +44,7 @@ Core planning does not require the right-hand side of the diagram. When the Node
 
 ## Deployment topology
 
-The public deployment is a **static SPA build** served from Qoder Sites at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. It serves `dist/` with platform-managed HTTPS and SPA fallback for browser navigations. It does not run Node, so `/api/*` requests return the platform's 404 and the AI Planner shows **Unavailable**.
+The public deployment is a **static SPA build** served from Qoder Sites at **[https://utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. It serves `dist/` with platform-managed HTTPS and SPA fallback for browser navigations. It does not run Node, so `/api/*` requests return the platform's 404 and the AI Planner shows **Unavailable**. A Diagnostics page in the current source reports that state as **Unavailable** when `/api/health` returns 404 or the SPA HTML; the published build predates the page.
 
 The following single-service Node topology is **prepared and verified locally, not deployed**:
 
@@ -90,6 +90,7 @@ The prepared Render Blueprint (`render.yaml`) uses one web service with `npm ci 
 | `src/features/guests/` | Guest validation, search, RSVP filters, counts, guest and catering-estimate UI | Sending guest data externally |
 | `src/features/catering/` | Deterministic estimator using confirmed RSVPs or expected count, buffer math, per-event assumption | Treating estimates as vendor quotes |
 | `src/features/ai/` | Shared AI contracts, privacy-minimal context builder, HTTP client, fallback outline, deterministic plan validation, preview/approval state, AI UI | Budget/timeline/guest/risk rules of its own; changing protected constraints |
+| `src/features/diagnostics/` | Bounded in-memory diagnostic log with safe summaries and reference IDs, global error/rejection capture, same-origin health and AI-configuration probes, diagnostics UI | Raw error text, stacks, URLs, workspace or guest data, telemetry upload, or mutating planning data |
 | `src/features/theme/` | Theme preference context, device color-scheme subscription, and document class application | Planning data, workspace state, or persisted settings beyond the theme key |
 | `server/` | Server-only environment config, HTTP routing and hardening, health endpoint, static SPA serving, rate limiting, provider adapter, prompt construction, response validation | Business logic, planning-data persistence, state between requests |
 | `src/lib/` | Framework-free date, money, and theme-preference utilities | React or feature state |
@@ -352,11 +353,26 @@ sequenceDiagram
 
 The server has no database, no session state, no user accounts, no planning-data store, and no persistent audit store. The rate limiter is in-memory and resets when the process restarts. The default bind address is loopback; a hosting platform must bind it publicly behind the platform's HTTPS router. Static serving is opt-in with `SERVE_STATIC=true`.
 
+## Diagnostics architecture
+
+Diagnostics are observational and separate from planning data. `src/features/diagnostics/` owns:
+
+- `diagnosticsStore.ts` — a bounded (40-entry) in-memory store. Each report is sanitised (collapsed and truncated message/feature, validated request ID), fingerprinted, and deduplicated behind a stable reference ID. It also records the last successful save, approval, or backup and supports marking the newest entry in a category as recovered. The singleton is per tab; nothing is persisted or uploaded.
+- `globalDiagnostics.ts` — idempotent `error` and `unhandledrejection` listeners installed from `main.tsx`. They record fixed descriptions plus a sanitised error name and deliberately never read the error message, stack, URL, or rejection value.
+- `serviceStatus.ts` — probes `GET /api/health` with a 4-second timeout and `cache: 'no-store'`, validating `{"status":"ok"}` with Zod. It probes `/api/ai/status` only when health is operational. HTTP 404 and SPA-fallback HTML map to **Unavailable**, as do gateway statuses 502, 503, and 504 that indicate the API process is unreachable; a non-JSON or unexpected payload and an internal error such as HTTP 500 map to **Error Detected**. AI configuration is reported as **Configured** or **Configuration Required**, never as verified operational.
+- `DiagnosticsPage.tsx` / `useDiagnostics.ts` — the `/diagnostics` route. Statuses are **Operational**, **Degraded**, **Unavailable**, **Configuration Required**, **Configured**, **Error Detected**, or **Checking**. The page never infers API or AI health from the frontend loading; it shows the last probe time and sends no provider request.
+
+Failure paths report from the module that owns the operation: workspace persistence, export/import, rescue and AI approvals, AI request failures, Settings file reading, render errors, and risk-analysis exceptions. Diagnostics never change planning state, and reporting is not part of any approval decision.
+
 ## Error handling and fallbacks
 
 | Area | Failure | Behavior |
 | --- | --- | --- |
-| Route render or chunk load | A feature page throws or its JavaScript chunk cannot load | The top-level boundary replaces the app with a safe recovery screen, focuses its heading, exposes no raw error text, and offers retry and reload |
+| Route render or chunk load | A feature page throws or its JavaScript chunk cannot load | The top-level boundary replaces the app with a safe recovery screen, focuses its heading, exposes no raw error text, records a diagnostic reference ID, and offers retry and reload |
+| Uncaught script error or rejection | A global handler sees it | A fixed safe summary and sanitised error name enter the in-memory diagnostic log; raw messages, stacks, URLs, and rejection values are not read |
+| API health probe | 404, SPA-fallback HTML, or gateway 502/503/504 | Report **Unavailable** and explain that the deployment serves the static app without a reachable Node API |
+| API health probe | Timeout or network failure | Report **Unavailable** after the bounded timeout; no retry loop |
+| API health probe | Non-JSON or unexpected payload | Report **Error Detected** with the HTTP status and no provider detail |
 | Initial route load | Feature chunk is slow | The app shell and navigation stay visible while an accessible loading card reports progress; client-side transitions keep the previous page visible until the next route resolves |
 | Storage load | Empty | Seed labelled sample workspace |
 | Storage load | Invalid whole payload | Do not overwrite immediately; attempt a recovery copy; show sample data with a safe status message |

@@ -4,14 +4,15 @@
 
 UTSAV AI is a celebration and event planner built for **PromptWars Virtual — Challenge 5**.
 The repository contains the Step 1–10 feature set plus the **Step 11 deployment-readiness**
-work. The dashboard, event browsing, creation, editing, and deletion, sample-data controls,
+work and a centralized **diagnostics** layer. The dashboard, event browsing, creation, editing, and deletion, sample-data controls,
 settings, routing, per-event budget planning, deterministic repair proposals, deterministic
 event-rescue analysis with explicit atomic approval, guarded local persistence with schema
 versioning and recovery, timeline and task management, guest and RSVP management, a
 deterministic catering estimator, a centralized deterministic Risk Intelligence engine with
 reconciliation and dismissal history, validated JSON export/import, light/dark/system
-theming, and an advisory AI Planner
-with a server-side API provider boundary are implemented. The Node server can also serve the
+theming, an advisory AI Planner
+with a server-side API provider boundary, and an in-tab Diagnostics page with safe reference
+IDs, global error capture, and same-origin health/AI-configuration probes are implemented. The Node server can also serve the
 production SPA and a health endpoint, and a single-service Render Blueprint is prepared.
 **A public static demo is deployed** at **https://utsav-ai-9evw6i99uw4.qoder.website**
 (Qoder Sites, HTTPS). That deployment serves the built SPA only: the Node server, `/api`
@@ -62,6 +63,12 @@ validation, risk severity, feasibility, and approval.
   task, guest, catering, or risk rules; it calls those modules.
 - `src/features/theme/` owns the theme preference context, the device color-scheme
   subscription, and document class application. It must not read or mutate planning data.
+- `src/features/diagnostics/` owns the bounded in-memory diagnostic log and sanitised report
+  model, global `error`/`unhandledrejection` capture, same-origin health and AI-configuration
+  probes, and the Diagnostics UI. It must not store raw error text, stacks, URLs, workspace or
+  guest data, prompts, provider payloads, exports, or keys; it must never upload diagnostics
+  or mutate planning data. It may read workspace persistence status through the workspace
+  context.
 - `server/` owns the Node server: environment config, HTTP routing and hardening, the health
   endpoint, optional static SPA serving, rate limiting, the provider interface, prompt
   construction, and response validation. It is a provider proxy and static file server, not
@@ -258,6 +265,15 @@ Report failures honestly. Never claim a test passed without running it.
   fixed-window rate limit, JSON-only endpoint, and safe error envelope with a request ID.
   Responses use `no-store`, no CORS, `X-Frame-Options: DENY`, and safe logs. Never add an automatic retry loop or log
   a key, prompt, provider body, or stack trace.
+- Diagnostics are observational and local to the tab. Entries store safe summaries, categories,
+  severities, affected features, timestamps, recovery state, and stable reference IDs only —
+  never raw error text, stacks, URLs, prompts, provider payloads, workspace or guest data,
+  exports, or keys — and nothing is uploaded or persisted. Statuses are evidence-based:
+  Operational only from a verified same-origin health response, Unavailable for a 404,
+  SPA-fallback HTML, or gateway 502/503/504 response, Configuration Required when health
+  succeeds but AI credentials are absent, and AI availability is never claimed from
+  configuration alone (Configured is not Operational). The Diagnostics page must not mutate
+  planning data.
 - Production static serving is opt-in through `SERVE_STATIC=true` and must stay same-origin
   with `/api`. The static handler must keep rejecting path traversal, dotfiles, and dot
   segments; must not serve API paths; must return 404 for missing assets; and must leave

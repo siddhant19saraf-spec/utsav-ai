@@ -16,6 +16,7 @@ import {
 } from '@/test/fixtures';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
+import { diagnosticsStore } from '@/features/diagnostics/diagnosticsStore';
 import { AiPlanningPage } from './AiPlanningPage';
 import type { AiStatus } from './contracts';
 
@@ -340,6 +341,15 @@ describe('AiPlanningPage', () => {
     expect(screen.getByTestId('task-count')).toHaveTextContent('1');
     expect(screen.getByTestId('activity-count')).toHaveTextContent('0');
     expect(screen.queryByText('AI suggestion')).not.toBeInTheDocument();
+
+    const [diagnostic] = diagnosticsStore.getSnapshot().entries;
+    expect(diagnostic).toMatchObject({
+      category: 'api',
+      severity: 'warning',
+      feature: 'AI Planner',
+      requestId: 'req-fail-1',
+      recovery: 'retry-available',
+    });
   });
 
   it('reports a status API failure while keeping the local outline usable', async () => {

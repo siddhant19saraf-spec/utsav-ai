@@ -155,6 +155,33 @@ function sendRawRequest(baseUrl: string, payload: string): Promise<string> {
   });
 }
 
+function abortUploadMidBody(baseUrl: string): Promise<void> {
+  const { port } = new URL(baseUrl);
+
+  return new Promise((resolve) => {
+    const socket = net.connect(Number(port), '127.0.0.1', () => {
+      socket.write(
+        'POST /api/ai/plan HTTP/1.1\r\n' +
+          'Host: localhost\r\n' +
+          'Content-Type: application/json\r\n' +
+          'Content-Length: 1000\r\n' +
+          '\r\n' +
+          '{"mode":"create-plan","message":"partial',
+        () => {
+          // Give the server a moment to parse the headers and start reading the
+          // body before the connection is cut, so the request's close path runs.
+          setTimeout(() => {
+            socket.destroy();
+            resolve();
+          }, 50);
+        },
+      );
+    });
+
+    socket.on('error', () => resolve());
+  });
+}
+
 describe('AI HTTP API boundary', () => {
   it('exposes a lightweight health endpoint without AI configuration', async () => {
     const baseUrl = await startTestServer({ configured: false });
@@ -514,5 +541,16 @@ describe('AI HTTP API boundary', () => {
     expect(memory.info.join(' ')).not.toContain('Test Celebration');
     expect(memory.info.join(' ')).not.toContain('Plan a wedding');
     expect(memory.info.join(' ')).not.toContain(testCredential);
+  });
+
+  it('keeps serving after a client aborts an upload mid-body', async () => {
+    const baseUrl = await startTestServer();
+
+    await abortUploadMidBody(baseUrl);
+
+    const health = await fetch(`${baseUrl}/api/health`);
+
+    expect(health.status).toBe(200);
+    expect(await health.json()).toEqual({ status: 'ok' });
   });
 });

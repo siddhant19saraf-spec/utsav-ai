@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { formatMoney, rupees } from '@/lib/money';
+import { diagnosticsStore } from '@/features/diagnostics/diagnosticsStore';
 import { makeBudget, makeCategory, makeEvent, makeWorkspace } from '@/test/fixtures';
 import { WorkspaceProvider } from './WorkspaceProvider';
 import { useWorkspace } from './workspaceContext';
@@ -114,6 +115,15 @@ describe('WorkspaceProvider persistence', () => {
     expect(screen.getByTestId('persistence')).toHaveTextContent('save-failed');
     expect(screen.getByTestId('message')).toHaveTextContent(/local storage is full/i);
 
+    const [diagnostic] = diagnosticsStore.getSnapshot().entries;
+    expect(diagnostic).toMatchObject({
+      category: 'persistence',
+      severity: 'error',
+      feature: 'Workspace storage',
+      recovery: 'retry-available',
+    });
+    expect(diagnostic?.message).toMatch(/local storage is full/i);
+
     const parsed = parseStoredWorkspace(
       window.localStorage.getItem(WORKSPACE_STORAGE_KEY) ?? '',
     );
@@ -123,6 +133,45 @@ describe('WorkspaceProvider persistence', () => {
     if (parsed.ok) {
       expect(parsed.workspace.events[0]?.budget.totalAvailable).toEqual(rupees(1_000));
     }
+  });
+
+  it('marks a recorded persistence failure as recovered after a successful save', async () => {
+    const user = userEvent.setup();
+    const event = makeEvent({
+      id: 'wedding',
+      budget: makeBudget({
+        eventId: 'wedding',
+        totalAvailable: rupees(1_000),
+        categories: [makeCategory({ id: 'venue', planned: rupees(100) })],
+      }),
+    });
+
+    expect(
+      saveWorkspaceToStorage(makeWorkspace({ events: [event] })),
+    ).toEqual({ ok: true });
+
+    diagnosticsStore.report({
+      category: 'persistence',
+      severity: 'error',
+      feature: 'Workspace storage',
+      message: 'Recent changes could not be saved.',
+      recovery: 'retry-available',
+    });
+
+    render(
+      <WorkspaceProvider>
+        <BudgetProbe />
+      </WorkspaceProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Raise total' }));
+
+    const snapshot = diagnosticsStore.getSnapshot();
+    expect(snapshot.entries[0]?.recovery).toBe('recovered');
+    expect(snapshot.lastOperation).toMatchObject({
+      feature: 'Workspace storage',
+      label: 'Changes saved in this browser',
+    });
   });
 
   it('falls back to a labelled sample workspace and reports malformed saved data', () => {

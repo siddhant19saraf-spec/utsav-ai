@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { toIsoDate } from '@/lib/date';
+import { diagnosticsStore } from '@/features/diagnostics/diagnosticsStore';
 import { useWorkspace } from '@/features/workspace/workspaceContext';
 import { fetchAiStatus, requestAiPlan } from './aiClient';
 import {
@@ -230,74 +231,108 @@ export function AiPlanningPage() {
           : 'Building the deterministic local outline. Nothing will be applied automatically.',
       );
 
-      let envelope: AiPlanEnvelope;
+      try {
+        let envelope: AiPlanEnvelope;
 
-      if (kind === 'provider') {
-        const response = await requestAiPlan(request);
+        if (kind === 'provider') {
+          const response = await requestAiPlan(request);
 
-        if (requestSequenceRef.current !== sequence) {
-          return;
-        }
+          if (requestSequenceRef.current !== sequence) {
+            return;
+          }
 
-        if (!response.ok) {
-          setRequestError({
-            code: response.code,
-            message: response.message,
-            requestId: response.requestId,
-          });
-          setAnnouncement(
-            'The AI request did not complete. Your saved planning data is unchanged.',
+          if (!response.ok) {
+            diagnosticsStore.report({
+              category: 'api',
+              severity: 'warning',
+              feature: 'AI Planner',
+              message: response.message,
+              requestId: response.requestId,
+              recovery: 'retry-available',
+            });
+            setRequestError({
+              code: response.code,
+              message: response.message,
+              requestId: response.requestId,
+            });
+            setAnnouncement(
+              'The AI request did not complete. Your saved planning data is unchanged.',
+            );
+            return;
+          }
+
+          envelope = response.data;
+        } else {
+          const fallback = buildLocalFallbackPlan(
+            request,
+            workspace,
+            new Date(),
           );
-          setPending(null);
-          return;
+
+          if (!fallback.ok) {
+            diagnosticsStore.report({
+              category: 'application',
+              severity: 'warning',
+              feature: 'AI Planner',
+              message: fallback.message,
+              recovery: 'retry-available',
+            });
+            setRequestError({
+              code: 'fallback-error',
+              message: fallback.message,
+              requestId: null,
+            });
+            setAnnouncement(
+              'The local outline could not be built. Your saved planning data is unchanged.',
+            );
+            return;
+          }
+
+          envelope = fallback.envelope;
         }
 
-        envelope = response.data;
-      } else {
-        const fallback = buildLocalFallbackPlan(
+        const nextValidation = validateAiPlan(
+          envelope.plan,
           request,
           workspace,
-          new Date(),
+          todayIso,
         );
 
-        if (!fallback.ok) {
-          setRequestError({
-            code: 'fallback-error',
-            message: fallback.message,
-            requestId: null,
-          });
-          setAnnouncement(
-            'The local outline could not be built. Your saved planning data is unchanged.',
-          );
-          setPending(null);
-          return;
-        }
-
-        envelope = fallback.envelope;
+        setResult({
+          envelope,
+          request,
+          contextSignature: contextResult.signature,
+        });
+        setSelection({
+          timelineIndexes: nextValidation.applyableTimelineIndexes,
+          taskIndexes: nextValidation.applyableTaskIndexes,
+        });
+        setAnnouncement(
+          envelope.source === 'provider'
+            ? `AI plan received from ${envelope.provider.name}. Review the deterministic checks before applying anything.`
+            : 'Deterministic local outline built from saved data. It is not an AI response.',
+        );
+      } catch {
+        diagnosticsStore.report({
+          category: 'application',
+          severity: 'error',
+          feature: 'AI Planner',
+          message:
+            'The AI request failed unexpectedly before a plan could be shown. Saved planning data is unchanged.',
+          recovery: 'retry-available',
+        });
+        setRequestError({
+          code: 'unexpected-error',
+          message:
+            'The request failed unexpectedly before a plan could be shown. Your saved planning data is unchanged. Try again or use the deterministic local outline.',
+          requestId: null,
+        });
+        setAnnouncement(
+          'The request failed unexpectedly before a plan could be shown. Your saved planning data is unchanged.',
+        );
+      } finally {
+        setPending(null);
       }
-
-      const nextValidation = validateAiPlan(
-        envelope.plan,
-        request,
-        workspace,
-        todayIso,
-      );
-
-      setResult({
-        envelope,
-        request,
-        contextSignature: contextResult.signature,
-      });
-      setSelection({
-        timelineIndexes: nextValidation.applyableTimelineIndexes,
-        taskIndexes: nextValidation.applyableTaskIndexes,
-      });
-      setPending(null);
-      setAnnouncement(
-        envelope.source === 'provider'
-          ? `AI plan received from ${envelope.provider.name}. Review the deterministic checks before applying anything.`
-          : 'Deterministic local outline built from saved data. It is not an AI response.',
-      );
     },
     [
       activeEvent,

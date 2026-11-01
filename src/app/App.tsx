@@ -57,6 +57,12 @@ const SettingsPage = lazy(() =>
   })),
 );
 
+const DiagnosticsPage = lazy(() =>
+  import('@/features/diagnostics/DiagnosticsPage').then((module) => ({
+    default: module.DiagnosticsPage,
+  })),
+);
+
 export function App() {
   return (
     <Routes>
@@ -70,6 +76,7 @@ export function App() {
         <Route path="risks" element={<RiskIntelligencePage />} />
         <Route path="assistant" element={<AiPlanningPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="diagnostics" element={<DiagnosticsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

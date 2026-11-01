@@ -5,6 +5,7 @@ import { PageLoading } from './PageLoading';
 import { PersistenceNotice } from './PersistenceNotice';
 import { Sidebar } from './Sidebar';
 import {
+  diagnosticsNavigationItem,
   navigationSections,
   settingsNavigationItem,
   type NavigationItem,
@@ -105,7 +106,11 @@ export function AppLayout() {
                 </div>
               ))}
             </div>
-            <div className="mt-3 border-t border-line pt-2">
+            <div className="mt-3 space-y-0.5 border-t border-line pt-2">
+              <MobileNavigationLink
+                item={diagnosticsNavigationItem}
+                onNavigate={() => setNavigationOpen(false)}
+              />
               <MobileNavigationLink
                 item={settingsNavigationItem}
                 onNavigate={() => setNavigationOpen(false)}

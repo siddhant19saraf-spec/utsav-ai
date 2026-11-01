@@ -1,11 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { installGlobalDiagnostics } from '@/features/diagnostics/globalDiagnostics';
 import { ThemeProvider } from '@/features/theme/ThemeProvider';
 import { WorkspaceProvider } from '@/features/workspace/WorkspaceProvider';
 import { App } from './App';
 import { AppErrorBoundary } from './AppErrorBoundary';
 import './index.css';
+
+installGlobalDiagnostics();
 
 const rootElement = document.getElementById('root');
 

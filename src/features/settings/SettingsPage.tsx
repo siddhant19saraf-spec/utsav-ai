@@ -15,6 +15,7 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
+import { diagnosticsStore } from '@/features/diagnostics/diagnosticsStore';
 import { useTheme } from '@/features/theme/themeContext';
 import { toIsoDate } from '@/lib/date';
 import type { ThemePreference } from '@/lib/theme';
@@ -144,9 +145,16 @@ export function SettingsPage() {
     try {
       raw = await file.text();
     } catch {
-      setDataError(
-        'The selected file could not be read. Nothing was imported and your workspace is unchanged.',
-      );
+      const message =
+        'The selected file could not be read. Nothing was imported and your workspace is unchanged.';
+      setDataError(message);
+      diagnosticsStore.report({
+        category: 'import-export',
+        severity: 'warning',
+        feature: 'Backup and restore',
+        message,
+        recovery: 'retry-available',
+      });
       return;
     }
 
@@ -154,6 +162,13 @@ export function SettingsPage() {
 
     if (!validation.ok) {
       setDataError(validation.message);
+      diagnosticsStore.report({
+        category: 'import-export',
+        severity: 'warning',
+        feature: 'Backup and restore',
+        message: validation.message,
+        recovery: 'retry-available',
+      });
       return;
     }
 
@@ -386,6 +401,11 @@ export function SettingsPage() {
             configured only on the server-side API through environment variables; no API
             key or secret is bundled into the frontend.
           </p>
+
+          <Link to="/diagnostics" className="btn-secondary mt-4 text-xs">
+            <ShieldCheck className="size-3.5" aria-hidden="true" />
+            Open system diagnostics
+          </Link>
         </section>
       </div>
 

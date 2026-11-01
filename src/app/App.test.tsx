@@ -15,6 +15,7 @@ const navigationLabels = [
   'Guests',
   'Risk Intelligence',
   'AI Planner',
+  'Diagnostics',
   'Settings',
 ];
 
@@ -41,7 +42,7 @@ function renderApp(initialEntry = '/') {
 }
 
 describe('App', () => {
-  it('renders the dashboard shell with all nine navigation destinations', async () => {
+  it('renders the dashboard shell with all ten navigation destinations', async () => {
     renderApp();
 
     expect(await findDashboardHeading()).toBeInTheDocument();

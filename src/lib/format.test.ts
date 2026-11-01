@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCount, formatCountLabel } from './format';
+import { formatCount, formatCountLabel, formatDateTime } from './format';
 
 describe('formatCount', () => {
   it('groups digits with Indian place values', () => {
@@ -23,5 +23,18 @@ describe('formatCountLabel', () => {
     expect(formatCountLabel(2, 'activity overlap needs', 'activity overlaps need')).toBe(
       '2 activity overlaps need',
     );
+  });
+});
+
+describe('formatDateTime', () => {
+  it('formats a valid ISO timestamp with its year', () => {
+    const formatted = formatDateTime('2026-10-31T09:00:00.000Z');
+
+    expect(formatted).not.toBe('Unknown time');
+    expect(formatted).toContain('2026');
+  });
+
+  it('returns a safe placeholder for an invalid timestamp', () => {
+    expect(formatDateTime('not-a-date')).toBe('Unknown time');
   });
 });

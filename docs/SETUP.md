@@ -205,7 +205,7 @@ Import is a replace operation, not a merge. The app validates the whole file, sh
 | `npm run preview` | Serve the built client with Vite's preview server |
 | `npm start` | Run the Node server (API only unless `SERVE_STATIC=true`) |
 
-Verification results as of 2026-10-26: typecheck passed, lint passed with zero warnings, 529 tests passed across 52 files, and the production build passed. `npm audit` reported 0 vulnerabilities. The tests use mocked AI providers and require no real key, network access to a model, or paid request.
+Verification results as of 2026-10-31: typecheck passed, lint passed with zero warnings, 603 tests passed across 63 files, and the production build passed. `npm audit --omit=dev` reported 0 production vulnerabilities; the full audit reports 12 moderate dev-only advisories in the ESLint → `minimatch` toolchain, for which no non-breaking upstream fix is published. The tests use mocked AI providers and require no real key, network access to a model, or paid request.
 
 ## 7. Troubleshooting
 
@@ -252,6 +252,18 @@ Imports must be a valid UTSAV AI export under 5,000,000 characters and must pass
 ### Local storage is full
 
 Export a backup, remove the sample workspace if it is not needed, and free browser space. The app keeps unsaved edits in the tab but cannot guarantee persistence after closing. Safari/private browsing and restrictive browser settings may block storage entirely.
+
+### Checking service and failure status
+
+Open **Diagnostics** from the sidebar or go directly to `/diagnostics`. The page reports observed application/render errors, local persistence, the same-origin `/api/health` result, server-side AI configuration, the last successful save, approval, or backup in the tab, and recent safe failure summaries with reference IDs.
+
+- **Operational** for the API means a real `/api/health` response was received. A loaded frontend alone never produces that state.
+- **Configured** means the server reports provider configuration. It is not a live availability check, because the page sends no provider request.
+- **Unavailable** includes a static deployment with no `/api` routes, an SPA-fallback HTML response to `/api/health`, and a gateway response indicating the API process is unreachable (HTTP 502, 503, or 504).
+- **Error Detected** means the API answered but failed, for example an internal HTTP 500 or a payload that is not valid JSON.
+- Diagnostics are held in memory for the current tab only. Reloading or choosing **Clear log** removes them. They never contain workspace records, guest detail, prompts, provider payloads, exports, or keys, and they are not uploaded anywhere.
+
+Quote a diagnostic reference ID when reporting a problem; it identifies the safe summary, not the workspace contents.
 
 ### A route fails to load after a new build or deployment
 

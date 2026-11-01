@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { diagnosticsStore } from '@/features/diagnostics/diagnosticsStore';
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 let shouldCrash = true;
@@ -40,6 +41,17 @@ describe('AppErrorBoundary', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reload app' })).toBeInTheDocument();
     expect(consoleError).toHaveBeenCalled();
+
+    const entries = diagnosticsStore.getSnapshot().entries;
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      category: 'render',
+      severity: 'error',
+      feature: 'Application shell',
+      recovery: 'retry-available',
+    });
+    expect(screen.getByText(entries[0]?.referenceId ?? '')).toBeInTheDocument();
+    expect(screen.getByText(/diagnostic reference/i)).toBeInTheDocument();
   });
 
   it('redraws the child after the user retries', async () => {

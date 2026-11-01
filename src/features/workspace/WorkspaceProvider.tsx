@@ -1,6 +1,15 @@
-import { useCallback, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { toIsoDate } from '@/lib/date';
 import { createId } from '@/lib/id';
+import { diagnosticsStore } from '@/features/diagnostics/diagnosticsStore';
 import type { BudgetCategory, EmergencyReserveConfig } from '@/types/budget';
 import type {
   Guest,
@@ -82,6 +91,14 @@ function analyzeAtBoundary(
       errors: result.analysis.errors.map((entry) => entry.message),
     };
   } catch {
+    diagnosticsStore.report({
+      category: 'application',
+      severity: 'warning',
+      feature: 'Risk Intelligence',
+      message: riskFailureMessage,
+      recovery: 'retry-available',
+    });
+
     return { workspace, errors: [riskFailureMessage] };
   }
 }
@@ -188,6 +205,27 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
   const workspaceRef = useRef(workspace);
   const approvedProposalIdsRef = useRef(new Set<string>());
   const approvedAiPlanIdsRef = useRef(new Set<string>());
+  const bootstrapReportedRef = useRef(false);
+
+  useEffect(() => {
+    if (bootstrapReportedRef.current) {
+      return;
+    }
+
+    bootstrapReportedRef.current = true;
+
+    if (bootstrap.persistence.status === 'local') {
+      return;
+    }
+
+    diagnosticsStore.report({
+      category: 'persistence',
+      severity: bootstrap.persistence.status === 'load-partial' ? 'warning' : 'error',
+      feature: 'Workspace storage',
+      message: bootstrap.persistence.message,
+      recovery: 'not-retryable',
+    });
+  }, [bootstrap.persistence]);
 
   const persistWorkspace = useCallback(
     (next: Workspace) => {
@@ -196,11 +234,25 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
       }
 
       const result = saveWorkspaceToStorage(next);
-      setPersistence(
-        result.ok
-          ? localPersistence
-          : { status: 'save-failed', message: result.message },
-      );
+
+      if (result.ok) {
+        setPersistence(localPersistence);
+        diagnosticsStore.markRecovered('persistence');
+        diagnosticsStore.recordOperation(
+          'Workspace storage',
+          'Changes saved in this browser',
+        );
+        return;
+      }
+
+      setPersistence({ status: 'save-failed', message: result.message });
+      diagnosticsStore.report({
+        category: 'persistence',
+        severity: 'error',
+        feature: 'Workspace storage',
+        message: result.message,
+        recovery: 'retry-available',
+      });
     },
     [initialState],
   );
@@ -338,16 +390,36 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
     [persistWorkspace, replaceWorkspace],
   );
 
-  const exportWorkspace = useCallback(
-    () => exportWorkspaceToJson(workspaceRef.current),
-    [],
-  );
+  const exportWorkspace = useCallback(() => {
+    const result = exportWorkspaceToJson(workspaceRef.current);
+
+    if (result.ok) {
+      diagnosticsStore.recordOperation('Backup and restore', 'Workspace backup exported');
+    } else {
+      diagnosticsStore.report({
+        category: 'import-export',
+        severity: 'warning',
+        feature: 'Backup and restore',
+        message: result.message,
+        recovery: 'retry-available',
+      });
+    }
+
+    return result;
+  }, []);
 
   const importWorkspace = useCallback(
     (raw: string): ImportWorkspaceResult => {
       const parsed = importWorkspaceFromJson(raw);
 
       if (!parsed.ok) {
+        diagnosticsStore.report({
+          category: 'import-export',
+          severity: 'warning',
+          feature: 'Backup and restore',
+          message: parsed.message,
+          recovery: 'retry-available',
+        });
         return parsed;
       }
 
@@ -359,6 +431,13 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
 
         if (!saved.ok) {
           setPersistence({ status: 'save-failed', message: saved.message });
+          diagnosticsStore.report({
+            category: 'persistence',
+            severity: 'error',
+            feature: 'Backup and restore',
+            message: saved.message,
+            recovery: 'retry-available',
+          });
           return {
             ok: false,
             message: `The file is valid, but it could not be saved to this browser. Nothing was imported. ${saved.message}`,
@@ -370,6 +449,11 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
       approvedAiPlanIdsRef.current = new Set();
       replaceWorkspace(analyzed.workspace);
       setPersistence(localPersistence);
+      diagnosticsStore.markRecovered('persistence');
+      diagnosticsStore.recordOperation(
+        'Backup and restore',
+        'Workspace restored from a backup file',
+      );
 
       return { ok: true, workspace: analyzed.workspace };
     },
@@ -750,12 +834,26 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
         };
       }
 
-      return commitApproval(outcome, {
+      const result = commitApproval(outcome, {
         approvedIds: approvedProposalIdsRef.current,
         approvedId: proposal.id,
         replaceWorkspace,
         setPersistence,
       });
+
+      if (result.ok) {
+        diagnosticsStore.recordOperation('Event Rescue', 'Approved proposal saved');
+      } else if (result.code === 'persistence') {
+        diagnosticsStore.report({
+          category: 'persistence',
+          severity: 'error',
+          feature: 'Event Rescue',
+          message: result.message,
+          recovery: 'retry-available',
+        });
+      }
+
+      return result;
     },
     [initialState, replaceWorkspace],
   );
@@ -777,12 +875,26 @@ export function WorkspaceProvider({ children, initialState }: WorkspaceProviderP
         { todayIso: toIsoDate(now), now },
       );
 
-      return commitApproval(outcome, {
+      const result = commitApproval(outcome, {
         approvedIds: approvedAiPlanIdsRef.current,
         approvedId: proposal.planId,
         replaceWorkspace,
         setPersistence,
       });
+
+      if (result.ok) {
+        diagnosticsStore.recordOperation('AI Planner', 'Approved AI additions saved');
+      } else if (result.code === 'persistence') {
+        diagnosticsStore.report({
+          category: 'persistence',
+          severity: 'error',
+          feature: 'AI Planner',
+          message: result.message,
+          recovery: 'retry-available',
+        });
+      }
+
+      return result;
     },
     [initialState, replaceWorkspace],
   );

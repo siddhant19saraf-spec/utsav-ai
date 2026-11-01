@@ -20,6 +20,11 @@ Notable changes to UTSAV AI are recorded here. The project does not publish tagg
 - Theme tests: preference parsing and storage, system resolution, document class and browser theme-color application, persistence, and the header and Settings controls.
 - Shared-component tests for the `ModalDialog` accessibility shell (label and description wiring, initial focus, Escape close, Tab trap in both directions, backdrop dismissal, scroll-lock and focus restoration) and for `SelectedEventCard` (heading/meta rendering and labeled event switching).
 - A workspace-provider regression test that makes the localStorage write fail with a quota error and asserts that the edit stays in memory, the persistence state reports `save-failed` with the actionable message, and the previously saved payload is not corrupted, plus unit tests for the shared form-state helpers.
+- A **System diagnostics** page at `/diagnostics` with observed Application, Local persistence, API server (`/api/health`), and AI-provider configuration status; a last-successful-operation panel; and a bounded, deduplicated in-tab log of safe failure summaries with stable reference IDs, categories, severities, affected features, timestamps, recovery state, and server request IDs.
+- A centralized in-memory diagnostics store and idempotent global `error`/`unhandledrejection` handlers that store fixed summaries and a sanitised error name, never raw messages, stacks, URLs, rejection values, workspace records, prompts, provider payloads, exports, or keys.
+- Same-origin service probes with a 4-second timeout and `cache: 'no-store'`: `/api/health` is validated with Zod, and `/api/ai/status` is probed only when health is operational. HTTP 404, SPA-fallback HTML, and gateway 502/503/504 responses report **Unavailable**; a configured provider is labelled **Configured**, never **Operational**.
+- Diagnostic reporting from persistence save/load failures, recovery, export/import, Settings file reading, rescue and AI approval persistence failures, AI request failures, risk-analysis exceptions, and the render error boundary, which now shows a reference ID in its safe fallback.
+- Diagnostics tests (39) covering store sanitisation, deduplication, bounds, recovery marking, subscriptions, global-handler redaction, probe states (success, 404, 500, 502, 503/504, invalid JSON, SPA HTML, network, timeout, cancellation, configured/unconfigured/error AI), page status cards, clear/check flows, and failure-path entries; the render-boundary and workspace-provider tests now assert diagnostic entries.
 
 ### Changed
 
@@ -46,10 +51,12 @@ Notable changes to UTSAV AI are recorded here. The project does not publish tagg
 - Replaced nine `as unknown as Record<string, unknown>` assertions in the budget validator with a checked `asRecord` read, so malformed category or reserve values are handled as validation input rather than bypassing the type system. Validation rules, issue codes, and messages are unchanged.
 - Extracted the identical rescue/AI post-approval commit protocol in `WorkspaceProvider` into one `commitApproval` helper: state is replaced and the persistence status cleared only after the atomic save succeeds, and a persistence failure surfaces `save-failed` without mutating the workspace or recording the approval.
 - Removed a redundant `AiPlanRequest` assertion from the AI request handler; schema `safeParse` already narrows the request to the shared contract type.
-- Updated the automated baseline to 561 tests across 59 files and the recorded local build sizes: 452.58 kB entry chunk (132.90 kB gzip), 73.28 kB largest route chunk (18.34 kB gzip), and 57.16 kB CSS (10.16 kB gzip).
+- Updated the automated baseline to 603 tests across 63 files and the recorded local build sizes: 459.87 kB entry chunk (134.97 kB gzip), 73.28 kB largest route chunk (18.35 kB gzip), and 57.36 kB CSS (10.19 kB gzip).
 
 ### Fixed
 
+- The diagnostics health probe now treats an SPA-fallback HTML response (`text/html` with HTTP 200) as **Unavailable**, matching a static deployment that serves the app page for `/api/health`, instead of reporting **Error Detected** for a non-JSON payload. A regression test covers the fallback response.
+- The diagnostics health probe now treats HTTP 502, 503, and 504 as **Unavailable**, because a dev proxy or hosting gateway returns those when the API process is unreachable. A verified API internal error such as HTTP 500 still reports **Error Detected**. Regression tests cover 502, 503, 504, and 500.
 - A late AI response could attach to the wrong saved event. The request composer stays editable while a provider or fallback request is pending, so changing the saved event mid-request left the earlier response free to render against the newly selected event. The page now stamps each request with a monotonic sequence number, discards responses whose sequence is no longer current, and announces that the in-flight request was discarded. A regression test holds a provider response open, switches events, then releases it and asserts that no proposal appears. `src/features/ai/AiPlanningPage.tsx`, `src/features/ai/AiPlanningPage.test.tsx`.
 - Stabilized the lazy-route app-shell test after an intermittent timeout under full-suite CPU contention: the lazy-page lookup budget is now 10 seconds and the affected test budgets 25 seconds. Assertions were unchanged; the test still fails if a route does not render. `src/app/App.test.tsx` passed 5/5 in isolation and the full 549-test suite passed on four consecutive runs after the change.
 - Saved Event Rescue proposal snapshots were skipped during workspace load because the loader capped the stored `originalEventSignature` at 200 characters while the real canonical event signature is roughly 2,400–2,500 characters. The cap is now 65,536, and a round-trip regression test saves and reloads a snapshot carrying the full signature.
@@ -58,7 +65,9 @@ Notable changes to UTSAV AI are recorded here. The project does not publish tagg
 ### Security
 
 - Documented private vulnerability reporting and the project's security scope, privacy limits, and known gaps.
+- Centralized diagnostics are privacy-minimal by construction: they store only sanitised summaries, affected feature, category/severity, timestamps, a local reference ID, and a validated request ID. Global handlers do not read error messages, stacks, URLs, or rejection values. The log is bounded to 40 entries, held in memory for one tab, cleared on reload, and never uploaded.
 - Recorded that the live static responses were observed without a Content-Security-Policy or `X-Frame-Options`, that the static host serves no `/api` routes, and that no provider call was made.
+- Corrected the dependency-audit statement for the 2026-10-31 verification baseline: `npm audit --omit=dev` reports **0 production vulnerabilities**, while the full audit reports 12 **moderate** advisories confined to the development-only ESLint → `minimatch` toolchain (GHSA-g3hv-75wg-m249). No non-breaking upstream fix is published, no runtime dependency is affected, and no override or forced downgrade was applied.
 
 ## [0.1.0] - 2026-10-25
 

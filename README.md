@@ -18,7 +18,7 @@ Built for **PromptWars Virtual — Challenge 5** · Category: **Intelligent cele
 
 </div>
 
-> **Project status:** local-first hackathon prototype with a **live public static demo** at **[utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. Core planning works entirely in the browser. The hosted build serves the same SPA and browser-local workspace, but it does **not** host the optional Node AI proxy: the AI Planner reports **Unavailable** and the deterministic, clearly labelled local outline remains available. There is no account system, server database, or cloud sync. A single-service Node/Render configuration remains prepared but is not deployed. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+> **Project status:** local-first hackathon prototype with a **live public static demo** at **[utsav-ai-9evw6i99uw4.qoder.website](https://utsav-ai-9evw6i99uw4.qoder.website)**. Core planning works entirely in the browser. The hosted build serves the same SPA and browser-local workspace, but it does **not** host the optional Node AI proxy: the AI Planner reports **Unavailable** and the deterministic, clearly labelled local outline remains available. There is no account system, server database, or cloud sync. A single-service Node/Render configuration remains prepared but is not deployed. The current source also includes a **Diagnostics** page for observed service status and safe in-tab failure summaries; the published static build predates that page. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 <div align="center">
   <a href="docs/screenshots/dashboard.png">
@@ -145,13 +145,19 @@ The AI Planner builds a privacy-minimal aggregate context for one selected event
 
 A deterministic local outline is always available and is visibly labelled **Not AI-generated**. When no provider is configured or the server is unavailable, the app remains fully usable through this fallback.
 
+### System diagnostics
+
+The **Diagnostics** page reports observed status for four areas: the application render/script layer, browser storage, the same-origin API at `/api/health`, and server-side AI configuration. It also shows the last successful save, approval, or backup in the tab and a bounded list of recent safe failure summaries, each with a stable diagnostic reference ID and recovery state. A status is never inferred from the app merely loading: the API card changes only after an actual health request, and a configured provider is labelled **Configured** rather than **Operational** because the page sends no paid provider request. A static deployment with no `/api` routes reports **Unavailable**, including hosts that return the SPA page for `/api/health`. Gateway responses that mean the API process is unreachable (HTTP 502, 503, or 504) are also reported as **Unavailable**; an internal API error such as HTTP 500 is reported as **Error Detected**.
+
+Diagnostics live in memory for the open tab and are cleared on reload. They never include guest names, notes, prompts, provider payloads, exports, or API keys. Uncaught script errors and unhandled rejections are reduced to fixed descriptions and a sanitised error name; server failures use request IDs. There is no telemetry upload, remote log, or server-side diagnosis history.
+
 ### Appearance and theme
 
 The workspace supports **Light**, **Dark**, and **System** themes. The header toggle switches between light and dark, and Settings exposes all three options. The preference is stored in this browser under `utsav-ai.theme`, applied before first paint to avoid a theme flash, and follows device changes while **System** is selected. Dark mode inverts the existing maroon-and-cream design tokens; it does not send data anywhere or change planning behavior.
 
 ### Accessibility and keyboard use
 
-The UI uses semantic landmarks, labelled controls, visible focus states, keyboard-operable dialogs and navigation, status announcements, and reduced-motion support. Automated tests cover several keyboard flows, including mobile navigation focus handling and dialog Escape behavior. Text and surface tokens were also checked with an automated contrast audit across all nine routes in both themes (no text samples below 3.4:1 at a 518 px viewport). This is not a certified accessibility audit or screen-reader certification.
+The UI uses semantic landmarks, labelled controls, visible focus states, keyboard-operable dialogs and navigation, status announcements, and reduced-motion support. Automated tests cover several keyboard flows, including mobile navigation focus handling and dialog Escape behavior. Text and surface tokens were also checked with an automated contrast audit across the nine original routes in both themes (no text samples below 3.4:1 at a 518 px viewport); the diagnostics route is not part of that automated pass. This is not a certified accessibility audit or screen-reader certification.
 
 ## Implementation status
 
@@ -172,10 +178,11 @@ Statuses are based on source inspection and the test suite available in this rep
 | AI deterministic outline | **Implemented and verified** | Always available, derived from saved data, labelled **Not AI-generated**, no invented prices or bookings. |
 | AI provider suggestions | **Requires external configuration** | Implemented and covered by automated tests with a mocked provider. A real provider call requires a running API server, a real key, and a compatible model; no live-provider run is verified in this repository. |
 | Production static serving | **Implemented and verified locally** | The Node server can serve the built SPA with `/api` on the same origin, SPA fallback, cache headers, and `/api/health`. Verified against a local production build; the Node service itself is not hosted. |
-| Hosted static demo | **Live and verified** | The production `dist/` build is published publicly over HTTPS by Qoder Sites with SPA fallback. Verified: homepage, direct `/rescue`, `/budget`, and `/assistant` loads, asset delivery, Event Rescue analysis, deterministic outline, and browser-local task persistence across reload. The Node `/api` endpoints are not hosted there; the AI Planner shows **Unavailable**, not a fabricated response. |
+| Hosted static demo | **Live and verified** | The production `dist/` build is published publicly over HTTPS by Qoder Sites with SPA fallback. Verified: homepage, direct `/rescue`, `/budget`, and `/assistant` loads, asset delivery, Event Rescue analysis, deterministic outline, and browser-local task persistence across reload. The Node `/api` endpoints are not hosted there; the AI Planner shows **Unavailable**, not a fabricated response. The published build predates the Diagnostics page. |
 | Deployment configuration | **Static demo live; Node/Render prepared** | Qoder Sites publishes the static build. `render.yaml`, `.node-version`, `npm start`, environment documentation, and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) remain available for the optional full Node service with `/api`; no Render service has been created. |
 | Responsive layout and keyboard access | **Implemented but not fully verified** | Responsive layouts and mobile navigation focus behavior are implemented; automated tests cover main navigation and dialogs. Physical devices, all viewport combinations, and screen readers are not exhaustively verified. |
-| App shell resilience | **Implemented and verified** | Feature pages load in separate chunks with a shell-preserving, status-announced loading fallback. A top-level error boundary catches render or chunk-load failures, focuses a safe recovery heading, never shows the raw error detail, and offers retry and reload. Evidence: `AppErrorBoundary.test.tsx` (2 tests), `PageLoading.test.tsx` (1 test), `App.test.tsx`; production-browser checks confirmed all routes, a throttled initial load, a forced chunk failure, and reload recovery. |
+| App shell resilience | **Implemented and verified** | Feature pages load in separate chunks with a shell-preserving, status-announced loading fallback. A top-level error boundary catches render or chunk-load failures, focuses a safe recovery heading, never shows the raw error detail, records a diagnostic reference ID, and offers retry and reload. Evidence: `AppErrorBoundary.test.tsx` (2 tests), `PageLoading.test.tsx` (1 test), `App.test.tsx`; production-browser checks confirmed all routes, a throttled initial load, a forced chunk failure, and reload recovery. |
+| System diagnostics | **Implemented and verified by tests** | Dedicated `/diagnostics` route with observed application, persistence, API, and AI-configuration status; global error and rejection capture; stable reference IDs; deduplicated bounded in-tab log; last successful operation; no telemetry. | `DiagnosticsPage.test.tsx`, `diagnosticsStore.test.ts`, `globalDiagnostics.test.ts`, and `serviceStatus.test.ts` (37 tests); storage, AI-provider, and render failure paths assert their diagnostic entries. No committed browser E2E suite covers the page, and the published static build predates it. |
 | Event deletion | **Implemented and verified** | Explicit confirmation with the affected record counts; removes the event, budget, tasks, guests, activities, catering estimate, risk findings, and rescue-proposal snapshots scoped to that event. Other events are untouched. No undo; export remains the recovery path. |
 | Hosted database, accounts, cloud sync | **Not implemented** | The app is single-user and browser-local; there is no server database or sign-in. |
 | Live vendor prices, bookings, availability, weather | **Not implemented** | No vendor, calendar, payment, or weather integration exists. |
@@ -242,7 +249,7 @@ The application is feature-first. Feature folders own their UI, domain rules, an
 ```mermaid
 flowchart LR
     subgraph Browser["Browser — local-first core"]
-        UI["React feature pages<br/>Overview · Events · Budget · Rescue · Timeline · Guests · Risks · AI Planner · Settings"]
+        UI["React feature pages<br/>Overview · Events · Budget · Rescue · Timeline · Guests · Risks · AI Planner · Diagnostics · Settings"]
         WP["WorkspaceProvider<br/>state · commit · persistence · approval wiring"]
         RULES["Deterministic engines<br/>budget · rescue · risk · timeline · tasks · guests · catering"]
         LS[("localStorage<br/>workspace v2 + recovery copy")]
@@ -280,6 +287,7 @@ src/
     budget/     Budget contracts, calculations, validation, repair, planner UI
     catering/   Deterministic catering estimator
     dashboard/  Overview selectors and dashboard UI
+    diagnostics/ In-memory diagnostics store, global handlers, service probes, diagnostics UI
     events/     Event forms, filters, mutations, event UI
     guests/     Guest rules and UI
     rescue/     Rescue findings, proposal engine, validation, approval, UI
@@ -442,17 +450,17 @@ A shorter backup path for a live demo is included in [docs/DEMO_SCRIPT.md](docs/
 
 ## Testing and quality
 
-The required verification suite was last run on **2026-10-27** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
+The required verification suite was last run on **2026-10-31** with Node.js **v24.16.0** and npm **11.13.0**. These are actual results from this repository, not target numbers.
 
 | Check | Command | Result |
 | --- | --- | --- |
 | Type check | `npm run typecheck` | **Passed** (`tsc -b`, exit 0) |
 | Lint | `npm run lint` | **Passed**, zero warnings (`--max-warnings=0`) |
-| Automated tests | `npm run test` | **561 tests passed across 59 test files** |
+| Automated tests | `npm run test` | **603 tests passed across 63 test files** |
 | Production build | `npm run build` | **Passed**; route-split JS chunks and CSS emitted |
-| Dependency audit | `npm audit` | **0 vulnerabilities** reported |
+| Dependency audit | `npm audit` / `npm audit --omit=dev` | **0 production vulnerabilities**. The full audit reports 12 **moderate dev-only** advisories in the ESLint → `minimatch` toolchain; no non-breaking upstream fix is published, and no runtime dependency is affected. |
 
-Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 452.58 kB (132.90 kB gzip), the largest route chunk is 73.28 kB (18.34 kB gzip), and CSS is 57.16 kB (10.16 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
+Feature pages are loaded as separate chunks on demand. In the latest local build, the shared entry chunk is 459.87 kB (134.97 kB gzip), the largest route chunk is 73.28 kB (18.35 kB gzip), and CSS is 57.36 kB (10.19 kB gzip). The entry chunk is smaller than the previous single 840.00 kB bundle (224.30 kB gzip), and no Vite chunk-size warning is emitted. This is a local build-size measurement, not a field-performance benchmark.
 
 What the automated suite covers includes budget arithmetic and protected constraints, deterministic repair, rescue proposal validation and stale/duplicate approval rejection, keyboard activation of the rescue analysis, risk reconciliation and dismissal history, workspace persistence including salvage and migration, event editing and cross-event isolation, timeline overlap detection, task rules, guest and catering rules, AI contract validation, privacy isolation, mocked provider failures and limits, lazy-route loading, error-boundary recovery, and the main UI flows with Testing Library.
 
@@ -521,7 +529,10 @@ Limitations of the current verification:
 - Route-level code splitting is implemented, but there is no performance budget, field measurement of load times, or automated bundle-size regression check.
 - Mobile navigation and dialogs have automated keyboard tests, but the interface has not been tested on a broad matrix of physical devices or screen readers.
 - The repository includes no committed browser E2E suite or demo video; screenshots are static captures of the running app. CI covers type checking, linting, tests, and the build, but not browser E2E or deployment.
+- Diagnostics are held in memory for the current tab. Reloading, clearing the log, or closing the tab removes them; there is no telemetry upload, remote log, cross-tab history, or server-side diagnosis store.
+- The AI provider card reports server-side configuration, not live model availability. A configured provider is deliberately not probed from the page, so it is never labelled **Operational**.
 - The public deployment is static only. The Render Blueprint and Node production server were verified only locally; `/api`, server-side AI, and `/api/health` are not hosted, and the live site remains browser-local with no accounts or sync.
+- The published static demo was built before the Diagnostics page was added, so `/diagnostics` is not available on that deployment until a future rebuild and publish. The current source and local build include it.
 
 ### Planned improvements
 

@@ -2,6 +2,7 @@ import { HardDrive } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { BrandMark } from './BrandMark';
 import {
+  diagnosticsNavigationItem,
   navigationSections,
   settingsNavigationItem,
   type NavigationItem,
@@ -90,7 +91,8 @@ export function Sidebar() {
           ))}
         </div>
 
-        <div className="mt-7 border-t border-white/10 pt-4">
+        <div className="mt-7 space-y-1 border-t border-white/10 pt-4">
+          <SidebarLink item={diagnosticsNavigationItem} />
           <SidebarLink item={settingsNavigationItem} />
         </div>
       </nav>
