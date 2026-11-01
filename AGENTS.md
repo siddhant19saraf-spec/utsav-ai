@@ -14,11 +14,12 @@ theming, an advisory AI Planner
 with a server-side API provider boundary, and an in-tab Diagnostics page with safe reference
 IDs, global error capture, and same-origin health/AI-configuration probes are implemented. The Node server can also serve the
 production SPA and a health endpoint, and a single-service Render Blueprint is prepared.
-**A public static demo is deployed** at **https://utsav-ai-9evw6i99uw4.qoder.website**
-(Qoder Sites, HTTPS). That deployment serves the built SPA only: the Node server, `/api`
-routes, and provider proxy are **not deployed**, so the AI Planner reports **Unavailable** and
-the deterministic outline is used. There is no hosted data store, account system, cloud sync,
-or server-side planning-data backend; workspace data stays in each visitor's browser.
+Two deployments are live. A **public static demo** is at **https://utsav-ai-9evw6i99uw4.qoder.website**
+(Qoder Sites, HTTPS); it serves the built SPA only, so the AI Planner reports **Unavailable** there.
+A **full app (frontend + Node API) is deployed on Render** at **https://utsav-ai-qfcn.onrender.com**;
+its same-origin `/api` routes are live and the AI Planner reports **Not configured** until
+`AI_PROVIDER_API_KEY` and `AI_MODEL` are set in the Render environment. There is no hosted data
+store, account system, cloud sync, or server-side planning-data backend; workspace data stays in each visitor's browser.
 
 Do not describe planned behavior as implemented. Risk Intelligence is a working deterministic
 module; it is not an AI feature and does not score risks with a predictive model. The AI
@@ -279,7 +280,7 @@ Report failures honestly. Never claim a test passed without running it.
   segments; must not serve API paths; must return 404 for missing assets; and must leave
   `/api/health` independent of AI configuration. Do not hard-code a localhost API URL into
   production client code; the browser calls relative `/api` paths.
-- A public static demo is live at `https://utsav-ai-9evw6i99uw4.qoder.website`; the Node/Render service is not deployed. Do not create additional hosting services, DNS records, or public URLs, and do not claim a new deployment, Node/API hosting, TLS, or post-deploy smoke test without explicit user authorization and verifiable results. Keep AI credentials in the hosting platform's server-side environment only; the prepared service must remain usable with a clear **Not configured** AI state when they are absent.
+- A public static demo is live at `https://utsav-ai-9evw6i99uw4.qoder.website`, and the full app (frontend + Node API) is deployed on Render at `https://utsav-ai-qfcn.onrender.com` with AI currently **Not configured**. Do not create additional hosting services, DNS records, or public URLs, and do not claim a new deployment, Node/API hosting, TLS, or post-deploy smoke test without explicit user authorization and verifiable results. Keep AI credentials in the hosting platform's server-side environment only; the service must remain usable with a clear **Not configured** AI state when they are absent.
 - AI tests must mock the provider or use an ephemeral local server. Never make paid calls,
   require real credentials, or put real keys in fixtures. Cover missing credentials,
   timeouts, provider errors, request/size limits, rate limiting, malformed output, invalid
