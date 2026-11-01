@@ -113,7 +113,7 @@ Do **not** create a `VITE_*` variable for any credential or API URL. `VITE_*` va
 4. Leave the key blank or absent for a public demonstration that should not make paid provider calls.
 5. Save and redeploy the service so the process starts with the new environment.
 
-`render.yaml` deliberately does not contain AI credentials. Do not paste a real key into a committed YAML file, README, screenshot, issue, or browser console.
+`render.yaml` deliberately does not contain AI credentials; it declares `AI_PROVIDER_API_KEY` and `AI_MODEL` as manual (`sync: false`) variables so the Blueprint review shows them, but you enter the actual values in the Dashboard. Do not paste a real key into a committed YAML file, README, screenshot, issue, or browser console.
 
 ### Behavior when AI credentials are missing
 
